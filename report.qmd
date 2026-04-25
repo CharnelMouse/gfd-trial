@@ -1,0 +1,13 @@
+---
+title: "Null-free schema generation experiment"
+author: Mark Webster
+format:
+  gfm: default
+  html:
+    self-contained-math: true
+    embed-resources: true
+---
+
+## Aim
+
+To experiment with implementing some ideas on automatic null-free schema generation. Test.
