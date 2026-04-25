@@ -8,6 +8,319 @@ format:
     embed-resources: true
 ---
 
+```{r}
+library(targets)
+read_dot <- function(dot) {
+  cat(
+    "```{dot}\n//| fig-width: 100%\n",
+    dot,
+    "\n```\n",
+    sep = ""
+  )
+}
+library(autodb, warn.conflicts = FALSE)
+```
+
+## Replication
+
+This document can be generated from scratch by downloading the project, and running `targets::tar_make()` in R. A list of used package versions is included at the end, under Session Info.
+
 ## Aim
 
-To experiment with implementing some ideas on automatic null-free schema generation. Test.
+To experiment with implementing some ideas on automatic null-free schema generation.
+
+## Context
+
+I've been working on an R package called autodb, which implements existing algorithms to discover functional dependencies in a given data set, and use them to normalise it (to EKNF using Bernstein synthesis).
+
+As a simple example: take the following table:
+
+```{r}
+tar_read(ex1)
+```
+
+Clearly, rows in this table are uniquely defined by `a`, and `b` also determines `c`. This is discovered by the FDHits search algorithm:
+
+```{r}
+tar_read(fds1)
+```
+
+We can then turn this into a schema, and insert the data into the schema to make a database.
+
+```{r}
+tar_read(db1)
+```
+
+We can also plot this in a simple diagram:
+
+```{r, results='asis'}
+read_dot(tar_read(gv1))
+```
+
+However, this approach does not properly handle missing values (`NA` in R, `NULL` in most RDBMSs). Consider the following table:
+
+```{r}
+tar_read(ex2)
+```
+
+This is an abstract representation of some sort of time interval data. Not all intervals have an end point, because they haven't finished yet. I've added enough duplicate values so that only `id` determines the row, or anything else.
+
+Since functional dependency discovery treats missing values as if they're non-missing and equal to each other, the automatic schema returns the original table, with `id` marked as the sole key:
+
+```{r, results='asis'}
+read_dot(tar_read(gv2))
+```
+
+This can also lead to odd things like missing values appearing in keys, or foreign keys.
+
+Ideally, we'd like the option to also generate a null-free schema, so we don't have to deal with any missing values at all. This gives a more complete description of the data's structure, and means we don't have to deal with the unintuitive way in which most RDBMSs handle missing values.
+
+In this case, we'd like the result to be like this:
+
+```{r, results='asis'}
+read_dot(tar_read(gv_ideal2))
+```
+
+The trick lies in finding a generalisation of functional dependencies that can cover such cases, and making a simple implementation of searching for them, plus using the result to make a schema.
+
+## Generalising FDs
+
+There are various generalisations of FDs, including a few that try to handle missing values more explicitly. The three most worth mentioning here are as follows.
+
+- Literal FDs (LFDs) are like functional dependencies, but they pretend that missing values are non-missing and equal. These are effectively what functional dependency discovery algorithms are looking for, not normal FDs. Pretending that missing values are non-missing discards valuable information, but the the advantage is that they can be used to create a normalised schema in the same way as usual, and at least give something that's self-consistent.
+- Existential FDs (EFDs) are of the form `E: X -> Y`. `X` and `Y` are the determinant and dependant, as usual, but with the implicit assumption the dependency only applies to the rows where `E \/ X \/ Y` are non-missing.
+- Conditional FDs (CFDs) address a different problem: some structure only occurs when some of the variables take on specific values. These are of the form `[X, Z = z] -> [Y, W = w]`, and means that for any two tuples `s` and `t` where `s[X] = t[X]` and `s[Z] = t[Z] = z`, we also have `s[Y] = t[Y]` and `s[W] = t[W] = w`, and `z` and `w` are tuples for the attribute sets `Z` and `W`. This is not the original notation, which combined `XZ` and `YW`, and used a "pattern tableau" to indicate values, with a wildcard `_` value meaning no value specified, i.e. the attribute is in `X` or `Y` rather than `Z` or `W`. There are two important implication for CFDs. One is that a given CFD can imply a contradiction, e.g. `[Z = 0] -> [Z = 1]` is the same as `[Z = 0] -> false`, i.e. no tuple `t` can have `t[Z] = 0`. The other implication is that some CFDs can be trivially simplified (i.e. simplified regardless of the relation in question): if `Y \ W` is empty, i.e. the dependant is entirely fixed-value, then `X` can be removed, i.e. we only need the fixed-value part of the determinant.
+
+We use a generalisation of EFDs, making use of CFDs. The key introduction is that, in addition to the attribute `A`, we also consider its *presence indicator* `P(A)`. This is always non-missing ("non-nullable"), and takes values in the domain `{0, 1}`: it's equal to 1 when `A` is non-missing, and 0 when `A` is missing.
+
+In addition, we also forbid an attribute's value from being mentioned if it hasn't been confirmed that `P(A) = 1`.
+
+For example, for the interval data given above, under these rules we have `id -> start`, but we can't say that `id -> end`, because it's sometimes missing. However, we can say that `id -> P(end)`.
+
+We also want the equivalent of the EFD `id -> end`. To do so, we introduce the second key addition: we can also use constant-value terms for the presence indicators. We can now re-write the EFD as `[end = 1, id] -> end`: when `end` is present, `id` determines its value. This is more general than EFDs, because we can also discuss cases where attributes are known to be missing. It also means that we can note attributes as being always-present or always-missing: `{} -> [P(A) = 1]`, or `{} -> [P(A) = 0]`.
+
+It is possible to write inference rules for these generalised FDs, which I'll call DEFDs for the sake of argument. However, for intuition, it's easier to decompose DEFDs into three simpler cases. Since FDs can be split into separate FDs with the same determinant and the dependant split up, we do the same here to split dependants into three types.
+
+- `[P(X) = x] -> [P(Y) = y]` is a presence association rule, where the dependant consists of constant-value presence statements. By the same rule as for CFDs, this means that any non-constant determinants can be removed, so they are determinable by other constant-value presence statements alone. Since these only involve presence, we can use the shorthand `[X, ¬Z] => [Y, ¬W]` for `[P(X) = 1, P(Z) = 0] -> [P(Y) = 1, P(W) = 0]`.
+- `[X, P(Z), P(W) = w] -> P(Y)` is a presence dependency: given certain agreements on attribute presence, the value of `X` determines which attributes in `Y` are present. Note that this can be decomposed further: `P(Z)` can be replaced by constant-value statements, where we have a presence dependency for each possible value for `P(Z)`.
+- `[X, P(Z), P(W) = w] -> Y` is a generalised EFD (GEFD). Again, this can be decomposed with respect to `P(Z)`.
+
+These three types of dependency are different enough to be worth discussing separately WRT discovery.
+
+## Discovery
+
+### Presence association rules
+
+Presence association rules are just association rules on the presence indicators. This suggests discovering them using association rule mining. However, we need to be a bit careful: association rules are usually considered on the basis of only referring to elements when they're known to be present, and here we want to refer to the case where they're know to be absent as well.
+
+In R, we can use the arules package for mining. We also need to make ourselves familiar with some terminology.
+
+Association rule mining is usually done on the basis that we're not just interested in rules that are always true: we're also interested in rules that are often true. This is done using several different metrics.
+
+- The *support* `supp(X) in [0, 1]` for an item set `X` is the proportion of records with `X` present.
+- The *confidence* `conf(X => Y) := supp(XY)/supp(X)` for the rule `X => Y` is the proportion of records containing `X` that also contain `Y`, i.e. `X` implies `Y` `supp(Y)` of the time. In other words, `conf(X => Y) ~= P(Y|X)`.
+- The *lift* `lift(X => Y) := supp(XY)/supp(X)supp(Y) ~= P(XY)/P(X)P(Y)` measures how much the presence of `X` affects the frequency of `Y`. This, of course, is related to the covariance `P(XY) - P(X)P(Y)`, but it's a relative measure rather than an absolute one. It's also very roughly related to the resolution component of a scoring rule.
+
+Association rule searches usually filter discovered rules to satisfy a minimum support (for `X`), a minimum confidence, and a minimum lift (only minimum because the interest is in positive cases).
+
+Running the apriori algorithm on the presence patterns for the interval example gives the following rules:
+
+```{r}
+tar_read(rules2)
+```
+
+We can convert these into functional dependency form, and remove any that are made redundant by the others using the following:
+
+```{.r}
+rulefds2[apply(
+  outer(
+    rulefds2,
+    rulefds2,
+    `>`
+  ),
+  1,
+  Negate(any)
+)]
+```
+
+```{r}
+tar_read(minrulefds2)
+```
+
+Of course, this just says what we already knew: `id` and `start` are never missing.
+
+As a test that `apriori` searches for everything we want, we use the following example of a presence indicator matrix.
+
+```{r}
+tar_read(ex3)
+```
+
+This respects the following rules:
+
+- `a => b` and its equivalent form, `¬b => ¬a`
+- `a => ¬c` and its equivalent form, `c => ¬a`
+- `¬a => d` and its equivalent form, `¬d => a`
+
+Here are the non-dominated rules found:
+
+```{r}
+tar_read(minrulefds3)
+```
+
+Not everything is found, because only the positive cases are used. We can fix this by doubling up on every variable, producing both presence and absence columns:
+
+```{r}
+tar_read(dpres3)
+```
+
+The results are more like what we'd expect:
+
+```{r}
+tar_read(mindrulefds3)
+```
+
+We can also remove transitive "dependencies" to get something more minimal:
+
+```{r}
+tar_read(minntdrulefds3)
+```
+
+More usefully for our current purposes, we could also group dependants by determinants, to find which presence values determine which others:
+
+```{r}
+tar_read(grpfds3)
+```
+
+### Embedding pruning
+
+For future purposes, we also need to turn our presence rules into a graph of allowed embeddings. Embeddings are a set of constant-value presence conditions, which determine which subset of the data tuples we are considering. As an example, here are the possible embeddings for the interval example:
+
+```{r, results='asis'}
+read_dot(tar_read(dot_all_embed2))
+```
+
+Note that we're also keeping track of how we can get from one embedding to another by removing the presence for one attribute.
+
+We can then take our discovered presence rules for the interval data -- `id` and `start` are always non-missing -- and use these to reduce to just the relevant embeddings.
+
+```{r, results='asis'}
+read_dot(tar_read(dot_embed2))
+```
+
+As we'd expect, the main embedding is now the one with `id` and `start` present, and the children split this on whether `end` is present.
+
+Does this work for our presence example, too?
+
+```{r, results='asis'}
+read_dot(tar_read(dot_embed3))
+```
+
+It does indeed! There are a lot of transitive edges here, but we need to hang on to those to show the disjoint partitions.
+
+Note that a node with `n` unspecified attributes has up to `2n` children, but we don't have an equivalent rule going the other way: a node with `m` specified attributes can have more than `m` parents.
+
+### Presence dependencies
+
+Presence dependencies are of the form `[X, P(W) = w] -> P(Y)` in simplified form. These can be found naïvely by running a dependency search on the embedding `[P(W) = w]`, with only `X` allowed as determinants and `P(Y)` allowed as dependants, and where `X` is a subset of `W` such that `P(X) = 1`.
+
+We only report presence dependencies that aren't implied by weaker embeddings, i.e. `[X, P(W') = w'] -> P(Y)` where `W'` is a strict subset of `W`, and `w'` is the corresponding set-tuple of `w`.
+
+Here are the results for the interval data:
+
+```{r}
+tar_read(pfds2)
+```
+
+We see exactly the one presence dependency we expect.
+
+### GEFDs
+
+GEFDs are of the form `[X, P(W) = w] -> Y` in simplified form, where `XY` is a subset of `W` such that `P(XY) = 1`. These take a very similar approach to presence dependencies: we just take `W' \ X` as candidate dependants, where `W'` is the largest subset of `W` such that `P(W') = 1`.
+
+Again, we remove anything implied in parent embeddings.
+
+Here are the results for the interval data:
+
+```{r}
+tar_read(gefds2)
+```
+
+These are the ones we expect.
+
+## Schema creation
+
+We can now think about creating the schema. The three different types of dependency have different roles:
+
+- Presence rules, of course, determine which embeddings have any rows in them. They also determine how an embedding get split up into further disjoint partitions.
+- Presence dependencies determine keys for said disjoint partitions. This makes them what Darwen called distributed keys: key values can occur up to once across all of the involved relations.
+- GEFDs, of course, become FDs within their respective embeddings, and are used to create relations.
+
+We already used the presence rules to prune our search space for the other two dependency types. We now make use of the others.
+
+### GEFDs
+
+GEFDs are simple: we just use Bernstein synthesis on them to create a schema for each embedding. We don't ensure they're lossless. We do include the embedding in their name, to keep them distinguishable when we join the schemas together later.
+
+```{r}
+tar_read(prekey_schema2)
+```
+
+### Presence dependencies
+
+For each connected pair of embeddings, we know which attribute is associated with that edge. We ensure each of those embeddings has a relation with that attribute as the key. We then combine the embedding schemas, and connect those key relations together.
+
+```{r, results='asis'}
+read_dot(tar_read(nullfree_gv2))
+```
+
+Looking good! All that remains is to insert the data:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfree_dbgv2))
+```
+
+The foreign keys here should really be plotted to show they're a distributed foreign key, but this is fine for now.
+
+## Test
+
+To test everything works, here's another, more elaborate example:
+
+```{r}
+tar_read(ex4)
+```
+
+Minimal presence rules:
+
+```{r}
+tar_read(mindrulefds4)
+```
+
+Remaining embeddings:
+
+```{r, results='asis'}
+read_dot(tar_read(dot_embed4))
+```
+
+Presence dependencies:
+
+```{r}
+tar_read(pfds4)[lengths(tar_read(pfds4)) > 0]
+```
+
+GEFDs:
+
+```{r}
+tar_read(gefds4)[lengths(tar_read(gefds4)) > 0]
+```
+
+Final database:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfree_dbgv4))
+```
+
+## Session info
+
+```{r}
+sessionInfo()
+```
