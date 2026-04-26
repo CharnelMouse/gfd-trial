@@ -283,11 +283,63 @@ The foreign keys here should really be plotted to show they're a distributed for
 
 ## Test
 
+As another simple test, consider the following:
+
+```{r}
+tar_read(ex5)
+```
+
+Minimal presence rules:
+
+```{r}
+tar_read(mindrulefds5)
+```
+
+Remaining embeddings:
+
+```{r, results='asis'}
+read_dot(tar_read(dot_embed5))
+```
+
+Presence dependencies:
+
+```{r}
+tar_read(pfds5)[lengths(tar_read(pfds5)) > 0]
+```
+
+GEFDs:
+
+```{r}
+tar_read(gefds5)[lengths(tar_read(gefds5)) > 0]
+```
+
+Final database:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfree_dbgv5))
+```
+
+This looks correct. The schema is not exactly how we'd want it -- the two different partition keys mean that not everything is connected properly for consistency -- but that was a problem I expected, and is something I want to handle as a separate step.
+
+As a side-note, the two partition keys appear because we have `a -> P(c)`, but `a -> b` and `b -> P(c)` make that transitive. If we remove it before we create the schema, we get this:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfreetrim_dbgv5))
+```
+
+This has its own problems, of course.
+
+## Test 2
+
 To test everything works, here's another, more elaborate example:
 
 ```{r}
 tar_read(ex4)
 ```
+
+This has structure similar to the previous one, where the attribute that determines whether another is present is not the attribute that determines its value. We therefore expect the schema to not enforce some structure properly.
+
+We reduce the names to something more compact, so that the relation names don't become unmanageably long.
 
 Minimal presence rules:
 
@@ -318,6 +370,8 @@ Final database:
 ```{r, results='asis'}
 read_dot(tar_read(nullfree_dbgv4))
 ```
+
+The partition keys aren't being matched up properly here.
 
 ## Session info
 

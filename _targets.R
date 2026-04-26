@@ -221,18 +221,25 @@ list(
   tar_target(
     ex4,
     data.frame(
-      id = 1:20,
-      value = c(2.3, 2.3, 5.7, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_),
-      lower_bound = c(NA_real_, NA_real_, NA_real_, 2.4, 0, 1, 0, 5.6, 2.4, 5.3, 5.3, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 5.6, 2.4),
-      upper_bound = c(NA_real_, NA_real_, NA_real_, 7.1, 10, 10, 13.1, 25.8, 10, 13.1, 10, 25.8, 25.8, 25.8, 25.8,13.1, 13.1, 25.8, 25.8, 25.8),
-      interval_distribution = factor(c(NA, NA, NA, "uniform", "uniform", "uniform", "uniform", "uniform", "Beta", "Beta", "Beta", "Beta", "Kumaraswamy", "Kumaraswamy", "Kumaraswamy", "Kumaraswamy", "PERT", "PERT", "PERT", "PERT")),
-      param1 = c(NA, NA, NA, NA, NA, NA, NA, NA, 1, 1, 1, 2, 2, 2.1, 2, 2, 2, 1, 2, 2),
-      param2 = c(NA, NA, NA, NA, NA, NA, NA, NA, 1, 2, 2, 2, 2, 1, 1, 1, NA, NA, NA, NA)
+      id = 1:24,
+      value = c(2.3, 2.3, 5.7, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_, NA_real_),
+      lower_bound = c(NA_real_, NA_real_, NA_real_, 2.4, 0, 1, 0, 5.6, 0, 5.6, 2.4, 5.3, 5.3, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 5.6, 2.4, 5.6, 2.4),
+      upper_bound = c(NA_real_, NA_real_, NA_real_, 7.1, 10, 10, 13.1, 25.8, 13.1, 25.8, 10, 13.1, 10, 25.8, 25.8, 25.8, 25.8,13.1, 13.1, 25.8, 25.8, 25.8, 25.8, 25.8),
+      interval_distribution = factor(c(NA, NA, NA, "uniform", "uniform", "uniform", "uniform", "uniform", "arcsin", "arcsin", "Beta", "Beta", "Beta", "Beta", "Kumaraswamy", "Kumaraswamy", "Kumaraswamy", "Kumaraswamy", "PERT", "PERT", "PERT", "PERT", "Wigner", "Wigner")),
+      param1 = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 1, 1, 1, 2, 2, 2.1, 2, 2, 2, 1, 2, 2, 2, 2),
+      param2 = c(NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, 1, 2, 2, 2, 2, 1, 1, 1, NA, NA, NA, NA, NA, NA)
+    )
+  ),
+  tar_target(
+    short4,
+    setNames(
+      ex4,
+      c("i", "v", "l", "u", "d", "p1", "p2")
     )
   ),
   tar_target(
     presence4,
-    to_presence(ex4)
+    to_presence(short4)
   ),
   tar_target(
     dpres4,
@@ -259,7 +266,7 @@ list(
   ),
   tar_target(
     all_embed4,
-    embeddings(ex4)
+    embeddings(short4)
   ),
   tar_target(
     embed4,
@@ -272,11 +279,11 @@ list(
 
   tar_target(
     pfds4,
-    discover_presence(ex4, embed4)
+    discover_presence(short4, embed4)
   ),
   tar_target(
     gefds4,
-    discover_embedded(ex4, embed4)
+    discover_embedded(short4, embed4)
   ),
 
   tar_target(
@@ -293,11 +300,119 @@ list(
   ),
   tar_target(
     nullfree_db4,
-    decompose_embedded(ex4, nullfree_schema4, embed4)
+    decompose_embedded(short4, nullfree_schema4, embed4)
   ),
   tar_target(
     nullfree_dbgv4,
     gv(nullfree_db4)
+  ),
+
+  tar_target(
+    ex5,
+    data.frame(
+      a = 1:12,
+      b = 1:4,
+      c = c(1, 2, NA, NA, 2, 1, NA, NA, 3, 1, NA, NA)
+    )
+  ),
+  tar_target(
+    presence5,
+    to_presence(ex5)
+  ),
+  tar_target(
+    dpres5,
+    cbind(
+      presence5,
+      setNames(
+        as.data.frame(!presence5, check.names = FALSE),
+        paste0("¬", names(presence5))
+      )
+    )
+  ),
+  tar_target(
+    drules5,
+    find_rules(dpres5),
+    packages = "arules"
+  ),
+  tar_target(
+    drulefds5,
+    fds_from_rules(drules5, names(dpres5))
+  ),
+  tar_target(
+    mindrulefds5,
+    minimise_rulefds(drulefds5)
+  ),
+  tar_target(
+    all_embed5,
+    embeddings(ex5)
+  ),
+  tar_target(
+    embed5,
+    prune_embeddings(all_embed5, mindrulefds5)
+  ),
+  tar_target(
+    dot_embed5,
+    dot_emb(embed5, "embed2")
+  ),
+
+  tar_target(
+    pfds5,
+    discover_presence(ex5, embed5)
+  ),
+  tar_target(
+    gefds5,
+    discover_embedded(ex5, embed5)
+  ),
+
+  tar_target(
+    prekey_schema5,
+    prekey_schemas(gefds5, remove_avoidable = TRUE)
+  ),
+  tar_target(
+    nullfree_schema5,
+    add_partitions(prekey_schema5, pfds5, embed5)
+  ),
+  tar_target(
+    nullfree_gv5,
+    gv(nullfree_schema5)
+  ),
+  tar_target(
+    nullfree_db5,
+    decompose_embedded(ex5, nullfree_schema5, embed5)
+  ),
+  tar_target(
+    nullfree_dbgv5,
+    gv(nullfree_db5)
+  ),
+
+  tar_target(
+    pfdstrim5,
+    {
+      res <- pfds5
+      res$`[a, b]` <- res$`[a, b]`[!vapply(
+        detset(res$`[a, b]`),
+        identical,
+        logical(1),
+        "a"
+      )]
+      res
+    }
+  ),
+  tar_target(
+    nullfreetrim_schema5,
+    add_partitions(prekey_schema5, pfdstrim5, embed5)
+  ),
+  tar_target(
+    nullfreetrim_gv5,
+    gv(nullfreetrim_schema5)
+  ),
+  tar_target(
+    nullfreetrim_db5,
+    decompose_embedded(ex5, nullfreetrim_schema5, embed5)
+  ),
+  tar_target(
+    nullfreetrim_dbgv5,
+    gv(nullfreetrim_db5)
   ),
 
   tar_quarto(

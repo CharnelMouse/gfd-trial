@@ -289,16 +289,35 @@ prekey_schemas <- function(gefds, ...) {
 }
 
 add_partitions <- function(embed_schemas, pfds, embeds) {
+  full_pfds <- pfds
+  # fill with ancestors to ensure correct partition joins
+  for (n in seq_along(embeds$N)) {
+    nm <- embeds$N[[n]]
+    parents <- embeds$E[embeds$E[, "child"] == n, "parent"]
+    full_pfds[[n]] <- unique(Reduce(c, full_pfds[parents], full_pfds[[n]]))
+    while (length(parents) > 0) {
+      parents <- embeds$E[embeds$E[, "child"] %in% parents, "parent"]
+      full_pfds[[n]] <- unique(Reduce(
+        c,
+        lapply(
+          full_pfds[parents],
+          \(fds) fds[!is.element(dependant(fds), names(!is.na(embeds$V[n, ])))]
+        ),
+        full_pfds[[n]]
+      ))
+    }
+  }
+
   parts <- data.frame(
-    embed = rep(names(pfds), lengths(pfds))
+    embed = rep(names(full_pfds), lengths(full_pfds))
   )
-  parts$key <- unlist(lapply(pfds, detset), recursive = FALSE)
-  parts$dep <- Reduce(c, lapply(pfds, dependant), init = character())
+  parts$key <- unlist(lapply(full_pfds, detset), recursive = FALSE)
+  parts$dep <- Reduce(c, lapply(full_pfds, dependant), init = character())
   parts$children <- Map(
     \(x, dep) with(embeds, {
-      names(pfds)[
+      names(full_pfds)[
         E[, "child"][
-          E[, "parent"] == match(x, names(pfds)) &
+          E[, "parent"] == match(x, names(full_pfds)) &
             vapply(embeds$A, is.element, logical(1), el = dep)
         ]
       ]
@@ -306,6 +325,8 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
     parts$embed,
     parts$dep
   )
+
+  # make new key table if needed, create new partition reference either way
   new_refs <- list()
   for (n in seq_len(nrow(parts))) {
     key <- parts[[n, "key"]]
@@ -313,7 +334,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
     ks <- keys(embed_schemas[[parent]])
     in_keys <- vapply(
       ks,
-      \(x) any(vapply(x, is.element, logical(1), el = key)),
+      \(x) any(vapply(x, identical, logical(1), key)),
       logical(1)
     )
     if (any(in_keys)) {
@@ -337,8 +358,8 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
       parent_rel <- new_relname
     }
     child_rels <- character()
-    for (nm in parts[[n, "children"]]) {
-      ks <- keys(embed_schemas[[nm]])
+    for (ch in parts[[n, "children"]]) {
+      ks <- keys(embed_schemas[[ch]])
       in_keys <- vapply(
         ks,
         \(x) any(vapply(x, is.element, logical(1), el = key)),
@@ -348,16 +369,16 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
         stopifnot(sum(in_keys) == 1)
         child_rels <- c(child_rels, names(ks)[in_keys])
       }else{
-        new_relname <- paste0(nm, "::key_", n)
-        embed_schemas[[nm]] <- c(
-          embed_schemas[[nm]],
+        new_relname <- paste0(ch, "::key_", n)
+        embed_schemas[[ch]] <- c(
+          embed_schemas[[ch]],
           database_schema(
             relation_schema(
               setNames(
                 list(list(key, list(key))),
                 new_relname
               ),
-              attrs_order(embed_schemas[[nm]])
+              attrs_order(embed_schemas[[ch]])
             ),
             list()
           )

@@ -132,7 +132,7 @@ read_dot(tar_read(gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-10.png"
+<img src="report_files\figure-commonmark\dot-figure-13.png"
 style="height:5in" />
 
 </div>
@@ -162,7 +162,7 @@ read_dot(tar_read(gv_ideal2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-9.png"
+<img src="report_files\figure-commonmark\dot-figure-12.png"
 style="height:5in" />
 
 </div>
@@ -448,7 +448,7 @@ read_dot(tar_read(dot_all_embed2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-8.png"
+<img src="report_files\figure-commonmark\dot-figure-11.png"
 style="height:5in" />
 
 </div>
@@ -474,7 +474,7 @@ read_dot(tar_read(dot_embed2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-7.png"
+<img src="report_files\figure-commonmark\dot-figure-10.png"
 style="height:5in" />
 
 </div>
@@ -498,7 +498,7 @@ read_dot(tar_read(dot_embed3))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-6.png"
+<img src="report_files\figure-commonmark\dot-figure-9.png"
 style="height:5in" />
 
 </div>
@@ -643,7 +643,7 @@ read_dot(tar_read(nullfree_gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-5.png"
+<img src="report_files\figure-commonmark\dot-figure-8.png"
 style="height:5in" />
 
 </div>
@@ -664,7 +664,7 @@ read_dot(tar_read(nullfree_dbgv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-4.png"
+<img src="report_files\figure-commonmark\dot-figure-7.png"
 style="height:5in" />
 
 </div>
@@ -677,6 +677,139 @@ The foreign keys here should really be plotted to show they’re a
 distributed foreign key, but this is fine for now.
 
 ## Test
+
+As another simple test, consider the following:
+
+``` r
+tar_read(ex5)
+```
+
+        a b  c
+    1   1 1  1
+    2   2 2  2
+    3   3 3 NA
+    4   4 4 NA
+    5   5 1  2
+    6   6 2  1
+    7   7 3 NA
+    8   8 4 NA
+    9   9 1  3
+    10 10 2  1
+    11 11 3 NA
+    12 12 4 NA
+
+Minimal presence rules:
+
+``` r
+tar_read(mindrulefds5)
+```
+
+    2 functional dependencies
+    6 attributes: a, b, c, ¬a, ¬b, ¬c
+     -> b
+     -> a
+
+Remaining embeddings:
+
+``` r
+read_dot(tar_read(dot_embed5))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-6.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+Presence dependencies:
+
+``` r
+tar_read(pfds5)[lengths(tar_read(pfds5)) > 0]
+```
+
+    $`[a, b]`
+    2 functional dependencies
+    3 attributes: a, b, c
+    a -> c
+    b -> c
+
+GEFDs:
+
+``` r
+tar_read(gefds5)[lengths(tar_read(gefds5)) > 0]
+```
+
+    $`[a, b]`
+    1 functional dependency
+    2 attributes: a, b
+    a -> b
+
+    $`[a, b, c]`
+    1 functional dependency
+    3 attributes: a, b, c
+    a -> c
+
+Final database:
+
+``` r
+read_dot(tar_read(nullfree_dbgv5))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-5.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+This looks correct. The schema is not exactly how we’d want it – the two
+different partition keys mean that not everything is connected properly
+for consistency – but that was a problem I expected, and is something I
+want to handle as a separate step.
+
+As a side-note, the two partition keys appear because we have
+`a -> P(c)`, but `a -> b` and `b -> P(c)` make that transitive. If we
+remove it before we create the schema, we get this:
+
+``` r
+read_dot(tar_read(nullfreetrim_dbgv5))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-4.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+This has its own problems, of course.
+
+## Test 2
 
 To test everything works, here’s another, more elaborate example:
 
@@ -693,18 +826,30 @@ tar_read(ex4)
     6   6    NA         1.0        10.0               uniform     NA     NA
     7   7    NA         0.0        13.1               uniform     NA     NA
     8   8    NA         5.6        25.8               uniform     NA     NA
-    9   9    NA         2.4        10.0                  Beta    1.0      1
-    10 10    NA         5.3        13.1                  Beta    1.0      2
-    11 11    NA         5.3        10.0                  Beta    1.0      2
-    12 12    NA         2.4        25.8                  Beta    2.0      2
-    13 13    NA         2.4        25.8           Kumaraswamy    2.0      2
-    14 14    NA         2.4        25.8           Kumaraswamy    2.1      1
-    15 15    NA         2.4        25.8           Kumaraswamy    2.0      1
-    16 16    NA         2.4        13.1           Kumaraswamy    2.0      1
-    17 17    NA         2.4        13.1                  PERT    2.0     NA
-    18 18    NA         2.4        25.8                  PERT    1.0     NA
-    19 19    NA         5.6        25.8                  PERT    2.0     NA
-    20 20    NA         2.4        25.8                  PERT    2.0     NA
+    9   9    NA         0.0        13.1                arcsin     NA     NA
+    10 10    NA         5.6        25.8                arcsin     NA     NA
+    11 11    NA         2.4        10.0                  Beta    1.0      1
+    12 12    NA         5.3        13.1                  Beta    1.0      2
+    13 13    NA         5.3        10.0                  Beta    1.0      2
+    14 14    NA         2.4        25.8                  Beta    2.0      2
+    15 15    NA         2.4        25.8           Kumaraswamy    2.0      2
+    16 16    NA         2.4        25.8           Kumaraswamy    2.1      1
+    17 17    NA         2.4        25.8           Kumaraswamy    2.0      1
+    18 18    NA         2.4        13.1           Kumaraswamy    2.0      1
+    19 19    NA         2.4        13.1                  PERT    2.0     NA
+    20 20    NA         2.4        25.8                  PERT    1.0     NA
+    21 21    NA         5.6        25.8                  PERT    2.0     NA
+    22 22    NA         2.4        25.8                  PERT    2.0     NA
+    23 23    NA         5.6        25.8                Wigner    2.0     NA
+    24 24    NA         2.4        25.8                Wigner    2.0     NA
+
+This has structure similar to the previous one, where the attribute that
+determines whether another is present is not the attribute that
+determines its value. We therefore expect the schema to not enforce some
+structure properly.
+
+We reduce the names to something more compact, so that the relation
+names don’t become unmanageably long.
 
 Minimal presence rules:
 
@@ -713,50 +858,50 @@ tar_read(mindrulefds4)
 ```
 
     43 functional dependencies
-    14 attributes: id, value, lower_bound, upper_bound, interval_distribution, param1, param2, ¬id, ¬value, ¬lower_bound, ¬upper_bound, ¬interval_distribution, ¬param1, ¬param2
-                           -> id
-                     value -> ¬lower_bound
-              ¬lower_bound -> value
-                     value -> ¬upper_bound
-              ¬upper_bound -> value
-                     value -> ¬interval_distribution
-    ¬interval_distribution -> value
-                     value -> ¬param1
-                     value -> ¬param2
-              ¬lower_bound -> ¬upper_bound
-              ¬upper_bound -> ¬lower_bound
-              ¬lower_bound -> ¬interval_distribution
-    ¬interval_distribution -> ¬lower_bound
-              ¬lower_bound -> ¬param1
-              ¬lower_bound -> ¬param2
-              ¬upper_bound -> ¬interval_distribution
-    ¬interval_distribution -> ¬upper_bound
-              ¬upper_bound -> ¬param1
-              ¬upper_bound -> ¬param2
-    ¬interval_distribution -> ¬param1
-    ¬interval_distribution -> ¬param2
-                   ¬param1 -> ¬param2
-                    param2 -> param1
-                    param2 -> lower_bound
-                    param2 -> upper_bound
-                    param2 -> interval_distribution
-                    param2 -> ¬value
-                    param1 -> lower_bound
-                    param1 -> upper_bound
-                    param1 -> interval_distribution
-                    param1 -> ¬value
-               lower_bound -> upper_bound
-               upper_bound -> lower_bound
-               lower_bound -> interval_distribution
-     interval_distribution -> lower_bound
-               lower_bound -> ¬value
-                    ¬value -> lower_bound
-               upper_bound -> interval_distribution
-     interval_distribution -> upper_bound
-               upper_bound -> ¬value
-                    ¬value -> upper_bound
-     interval_distribution -> ¬value
-                    ¬value -> interval_distribution
+    14 attributes: i, v, l, u, d, p1, p2, ¬i, ¬v, ¬l, ¬u, ¬d, ¬p1, ¬p2
+        -> i
+      v -> ¬l
+     ¬l -> v
+      v -> ¬u
+     ¬u -> v
+      v -> ¬d
+     ¬d -> v
+      v -> ¬p1
+      v -> ¬p2
+     ¬l -> ¬u
+     ¬u -> ¬l
+     ¬l -> ¬d
+     ¬d -> ¬l
+     ¬l -> ¬p1
+     ¬l -> ¬p2
+     ¬u -> ¬d
+     ¬d -> ¬u
+     ¬u -> ¬p1
+     ¬u -> ¬p2
+     ¬d -> ¬p1
+     ¬d -> ¬p2
+     p2 -> p1
+     p2 -> l
+     p2 -> u
+     p2 -> d
+     p2 -> ¬v
+    ¬p1 -> ¬p2
+     p1 -> l
+     p1 -> u
+     p1 -> d
+     p1 -> ¬v
+      l -> u
+      u -> l
+      l -> d
+      d -> l
+      l -> ¬v
+     ¬v -> l
+      u -> d
+      d -> u
+      u -> ¬v
+     ¬v -> u
+      d -> ¬v
+     ¬v -> d
 
 Remaining embeddings:
 
@@ -785,21 +930,21 @@ Presence dependencies:
 tar_read(pfds4)[lengths(tar_read(pfds4)) > 0]
 ```
 
-    $`[id]`
+    $`[i]`
     6 functional dependencies
-    7 attributes: id, value, lower_bound, upper_bound, interval_distribution, param1, param2
-    id -> value
-    id -> lower_bound
-    id -> upper_bound
-    id -> interval_distribution
-    id -> param1
-    id -> param2
+    7 attributes: i, v, l, u, d, p1, p2
+    i -> v
+    i -> l
+    i -> u
+    i -> d
+    i -> p1
+    i -> p2
 
-    $`[id, ¬value, lower_bound, upper_bound, interval_distribution]`
+    $`[i, ¬v, l, u, d]`
     2 functional dependencies
-    6 attributes: id, lower_bound, upper_bound, interval_distribution, param1, param2
-    interval_distribution -> param1
-    interval_distribution -> param2
+    6 attributes: i, l, u, d, p1, p2
+    d -> p1
+    d -> p2
 
 GEFDs:
 
@@ -807,42 +952,40 @@ GEFDs:
 tar_read(gefds4)[lengths(tar_read(gefds4)) > 0]
 ```
 
-    $`[id, ¬value, lower_bound, upper_bound, interval_distribution]`
+    $`[i, ¬v, l, u, d]`
     3 functional dependencies
-    4 attributes: id, lower_bound, upper_bound, interval_distribution
-    id -> lower_bound
-    id -> upper_bound
-    id -> interval_distribution
+    4 attributes: i, l, u, d
+    i -> l
+    i -> u
+    i -> d
 
-    $`[id, ¬value, lower_bound, upper_bound, interval_distribution, param1]`
+    $`[i, ¬v, l, u, d, p1]`
     1 functional dependency
-    5 attributes: id, lower_bound, upper_bound, interval_distribution, param1
-    id -> param1
+    5 attributes: i, l, u, d, p1
+    i -> p1
 
-    $`[id, value, ¬lower_bound, ¬upper_bound, ¬interval_distribution, ¬param1, ¬param2]`
+    $`[i, v, ¬l, ¬u, ¬d, ¬p1, ¬p2]`
     1 functional dependency
-    2 attributes: id, value
-    id -> value
+    2 attributes: i, v
+    i -> v
 
-    $`[id, ¬value, lower_bound, upper_bound, interval_distribution, ¬param1, ¬param2]`
-    2 functional dependencies
-    4 attributes: id, lower_bound, upper_bound, interval_distribution
-                             -> interval_distribution
-    lower_bound, upper_bound -> id
+    $`[i, ¬v, l, u, d, ¬p1, ¬p2]`
+    1 functional dependency
+    4 attributes: i, l, u, d
+    l, u, d -> i
 
-    $`[id, ¬value, lower_bound, upper_bound, interval_distribution, param1, ¬param2]`
-    2 functional dependencies
-    5 attributes: id, lower_bound, upper_bound, interval_distribution, param1
-                                     -> interval_distribution
-    lower_bound, upper_bound, param1 -> id
+    $`[i, ¬v, l, u, d, p1, ¬p2]`
+    1 functional dependency
+    5 attributes: i, l, u, d, p1
+    l, u, d, p1 -> i
 
-    $`[id, ¬value, lower_bound, upper_bound, interval_distribution, param1, param2]`
+    $`[i, ¬v, l, u, d, p1, p2]`
     4 functional dependencies
-    6 attributes: id, lower_bound, upper_bound, interval_distribution, param1, param2
-                                                    id -> param2
-    upper_bound, interval_distribution, param1, param2 -> id
-                                        param1, param2 -> lower_bound
-                                   upper_bound, param2 -> lower_bound
+    6 attributes: i, l, u, d, p1, p2
+               i -> p2
+    u, d, p1, p2 -> i
+          p1, p2 -> l
+           u, p2 -> l
 
 Final database:
 
@@ -864,6 +1007,8 @@ style="height:5in" />
 </figure>
 
 </div>
+
+The partition keys aren’t being matched up properly here.
 
 ## Session info
 
