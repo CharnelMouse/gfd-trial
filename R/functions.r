@@ -188,10 +188,11 @@ prune_embeddings <- function(emb, rules) {
   edge_nonself <- with(emb, E[, "child"] != E[, "parent"])
   emb$E <- emb$E[edge_nonself, , drop = FALSE]
   emb$A <- emb$A[edge_nonself]
-  Elst <- if (nrow(emb$E) == 0)
+  Elst <- if (nrow(emb$E) == 0) {
     list()
-  else
+  }else{
     apply(emb$E, 1, identity, simplify = FALSE)
+  }
   mats <- match(Elst, Elst)
   uniq <- unique(mats)
   emb$A <- lapply(
@@ -244,7 +245,7 @@ discover_presence <- function(x, embeds) {
   res
 }
 
-discover_embedded <- function(x, embeds) {
+discover_embedded <- function(x, embeds, ...) {
   pres <- to_presence(x)
   res <- lapply(
     setNames(
@@ -259,7 +260,7 @@ discover_embedded <- function(x, embeds) {
 
       sample <- x[used, which(V), drop = FALSE]
 
-      discover(sample)
+      discover(sample, ...)
     }
   )
   # remove anything already implied by ancestors
@@ -464,4 +465,39 @@ decompose_embedded <- function(x, schema, embeds) {
     )
   }
   db
+}
+
+remove_vacuous_embeddings <- function(x, gefds) {
+  empty <- lengths(gefds) == 0
+  x$E <- as.data.frame(x$E, check.names = FALSE)
+  for (n in which(empty)) {
+    grps <- split(x$E, vapply(x$A, toString, character(1)))
+    grps <- lapply(
+      grps,
+      \(g) {
+        g <- as.matrix(g)
+        new <- expand.grid(
+          child = x$E[x$E[, "parent"] == n, "child"],
+          parent = x$E[x$E[, "child"] == n, "parent"]
+        )
+        rbind(
+          g[g[, "child"] != n & g[, "parent"] != n, , drop = FALSE],
+          new
+        )
+      }
+    )
+    x$E <- Reduce(
+      rbind,
+      grps,
+      init = x$E[FALSE, , drop = FALSE]
+    )
+    x$A <- rep(names(grps), vapply(grps, nrow, integer(1))) |>
+      strsplit(", ")
+  }
+  x$E <- as.matrix(x$E)
+  x$E[] <- match(x$E, which(!empty))
+  stopifnot(!anyNA(x$E))
+  x$N <- x$N[!empty]
+  x$V <- x$V[!empty, , drop = FALSE]
+  x
 }

@@ -339,7 +339,7 @@ tar_read(ex4)
 
 This has structure similar to the previous one, where the attribute that determines whether another is present is not the attribute that determines its value. We therefore expect the schema to not enforce some structure properly.
 
-We reduce the names to something more compact, so that the relation names don't become unmanageably long.
+We reduce the names to something more compact, so that the relation names don't become unmanageably long. We also only allow the ID and the distribution to be GEFD determinants, since anything else is an artefact of the limited data sample.
 
 Minimal presence rules:
 
@@ -372,6 +372,32 @@ read_dot(tar_read(nullfree_dbgv4))
 ```
 
 This looks about right: we can see the two key relation hierarchies for `id` and `d`.
+
+## Simplifying the schema
+
+Looking around the examples, we can see that there are often embeddings that don't contain any embedded FDs: they just contain a key-only schema for inter-embedding references. To simplify the resulting schema, we can optionally remove these information-free embeddings. If they are in the middle of a key chain, this requires joining up the embeddings on either side of them.
+
+Here's the trimmed version of the interval example:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfreeprune_dbgv2))
+```
+
+For the simple example where the presence-determining attribute isn't the value determining attribute:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfreeprune_dbgv5))
+```
+
+For the distribution data:
+
+```{r, results='asis'}
+read_dot(tar_read(nullfreeprune_dbgv4))
+```
+
+This last one is roughly right, but illustrates something we've left off: we removed the top embedding, but didn't keep the distributed key, so there's nothing marking the main value/variable tables (`[iv, ¬ludp1p2]` and `[ilud, ¬v]`) as disjoint on `id`. For that, we'll need to start thinking about how to track, and plot, distributed keys.
+
+We could also do with grouping relations from the same embedding together in the plot. I'll do that first, because it should be simpler.
 
 ## Session info
 

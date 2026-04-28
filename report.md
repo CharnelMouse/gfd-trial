@@ -132,7 +132,7 @@ read_dot(tar_read(gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-13.png"
+<img src="report_files\figure-commonmark\dot-figure-16.png"
 style="height:5in" />
 
 </div>
@@ -162,7 +162,7 @@ read_dot(tar_read(gv_ideal2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-12.png"
+<img src="report_files\figure-commonmark\dot-figure-15.png"
 style="height:5in" />
 
 </div>
@@ -448,7 +448,7 @@ read_dot(tar_read(dot_all_embed2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-11.png"
+<img src="report_files\figure-commonmark\dot-figure-14.png"
 style="height:5in" />
 
 </div>
@@ -474,7 +474,7 @@ read_dot(tar_read(dot_embed2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-10.png"
+<img src="report_files\figure-commonmark\dot-figure-13.png"
 style="height:5in" />
 
 </div>
@@ -498,7 +498,7 @@ read_dot(tar_read(dot_embed3))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-9.png"
+<img src="report_files\figure-commonmark\dot-figure-12.png"
 style="height:5in" />
 
 </div>
@@ -643,7 +643,7 @@ read_dot(tar_read(nullfree_gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-8.png"
+<img src="report_files\figure-commonmark\dot-figure-11.png"
 style="height:5in" />
 
 </div>
@@ -664,7 +664,7 @@ read_dot(tar_read(nullfree_dbgv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-7.png"
+<img src="report_files\figure-commonmark\dot-figure-10.png"
 style="height:5in" />
 
 </div>
@@ -721,7 +721,7 @@ read_dot(tar_read(dot_embed5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-6.png"
+<img src="report_files\figure-commonmark\dot-figure-9.png"
 style="height:5in" />
 
 </div>
@@ -770,7 +770,7 @@ read_dot(tar_read(nullfree_dbgv5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-5.png"
+<img src="report_files\figure-commonmark\dot-figure-8.png"
 style="height:5in" />
 
 </div>
@@ -798,7 +798,7 @@ read_dot(tar_read(nullfreetrim_dbgv5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-4.png"
+<img src="report_files\figure-commonmark\dot-figure-7.png"
 style="height:5in" />
 
 </div>
@@ -849,7 +849,9 @@ determines its value. We therefore expect the schema to not enforce some
 structure properly.
 
 We reduce the names to something more compact, so that the relation
-names don’t become unmanageably long.
+names don’t become unmanageably long. We also only allow the ID and the
+distribution to be GEFD determinants, since anything else is an artefact
+of the limited data sample.
 
 Minimal presence rules:
 
@@ -915,7 +917,7 @@ read_dot(tar_read(dot_embed4))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-3.png"
+<img src="report_files\figure-commonmark\dot-figure-6.png"
 style="height:5in" />
 
 </div>
@@ -969,28 +971,91 @@ tar_read(gefds4)[lengths(tar_read(gefds4)) > 0]
     2 attributes: i, v
     i -> v
 
-    $`[i, ¬v, l, u, d, ¬p1, ¬p2]`
-    1 functional dependency
-    4 attributes: i, l, u, d
-    l, u, d -> i
-
-    $`[i, ¬v, l, u, d, p1, ¬p2]`
-    1 functional dependency
-    5 attributes: i, l, u, d, p1
-    l, u, d, p1 -> i
-
     $`[i, ¬v, l, u, d, p1, p2]`
-    4 functional dependencies
+    1 functional dependency
     6 attributes: i, l, u, d, p1, p2
-               i -> p2
-    u, d, p1, p2 -> i
-          p1, p2 -> l
-           u, p2 -> l
+    i -> p2
 
 Final database:
 
 ``` r
 read_dot(tar_read(nullfree_dbgv4))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-5.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+This looks about right: we can see the two key relation hierarchies for
+`id` and `d`.
+
+## Simplifying the schema
+
+Looking around the examples, we can see that there are often embeddings
+that don’t contain any embedded FDs: they just contain a key-only schema
+for inter-embedding references. To simplify the resulting schema, we can
+optionally remove these information-free embeddings. If they are in the
+middle of a key chain, this requires joining up the embeddings on either
+side of them.
+
+Here’s the trimmed version of the interval example:
+
+``` r
+read_dot(tar_read(nullfreeprune_dbgv2))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-4.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+For the simple example where the presence-determining attribute isn’t
+the value determining attribute:
+
+``` r
+read_dot(tar_read(nullfreeprune_dbgv5))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-3.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+For the distribution data:
+
+``` r
+read_dot(tar_read(nullfreeprune_dbgv4))
 ```
 
 <div>
@@ -1008,8 +1073,14 @@ style="height:5in" />
 
 </div>
 
-This looks about right: we can see the two key relation hierarchies for
-`id` and `d`.
+This last one is roughly right, but illustrates something we’ve left
+off: we removed the top embedding, but didn’t keep the distributed key,
+so there’s nothing marking the main value/variable tables
+(`[iv, ¬ludp1p2]` and `[ilud, ¬v]`) as disjoint on `id`. For that, we’ll
+need to start thinking about how to track, and plot, distributed keys.
+
+We could also do with grouping relations from the same embedding
+together in the plot. I’ll do that first, because it should be simpler.
 
 ## Session info
 

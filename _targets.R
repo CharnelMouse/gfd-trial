@@ -218,6 +218,35 @@ list(
     nullfree_dbgv2,
     gv(nullfree_db2)
   ),
+  tar_target(
+    prunedembed2,
+    remove_vacuous_embeddings(embed2, gefds2)
+  ),
+  tar_target(
+    pruned_pfds2,
+    pfds2[names(pfds2) %in% prunedembed2$N]
+  ),
+  tar_target(
+    pruned_gefds2,
+    gefds2[names(gefds2) %in% prunedembed2$N]
+  ),
+  tar_target(
+    prekeyprune_schema2,
+    prekey_schemas(pruned_gefds2, remove_avoidable = TRUE)
+  ),
+  tar_target(
+    nullfreeprune_schema2,
+    add_partitions(prekeyprune_schema2, pruned_pfds2, prunedembed2) |>
+      collapse_schemas()
+  ),
+  tar_target(
+    nullfreeprune_db2,
+    decompose_embedded(ex2, nullfreeprune_schema2, prunedembed2)
+  ),
+  tar_target(
+    nullfreeprune_dbgv2,
+    gv(nullfreeprune_db2)
+  ),
 
   tar_target(
     ex4,
@@ -284,7 +313,7 @@ list(
   ),
   tar_target(
     gefds4,
-    discover_embedded(short4, embed4)
+    discover_embedded(short4, embed4, exclude = setdiff(names(short4), c("i", "d")))
   ),
 
   tar_target(
@@ -307,6 +336,36 @@ list(
   tar_target(
     nullfree_dbgv4,
     gv(nullfree_db4)
+  ),
+
+  tar_target(
+    prunedembed4,
+    remove_vacuous_embeddings(embed4, gefds4)
+  ),
+  tar_target(
+    pruned_pfds4,
+    pfds4[names(pfds4) %in% prunedembed4$N]
+  ),
+  tar_target(
+    pruned_gefds4,
+    gefds4[names(gefds4) %in% prunedembed4$N]
+  ),
+  tar_target(
+    prekeyprune_schema4,
+    prekey_schemas(pruned_gefds4, remove_avoidable = TRUE)
+  ),
+  tar_target(
+    nullfreeprune_schema4,
+    add_partitions(prekeyprune_schema4, pruned_pfds4, prunedembed4) |>
+      collapse_schemas()
+  ),
+  tar_target(
+    nullfreeprune_db4,
+    decompose_embedded(short4, nullfreeprune_schema4, prunedembed4)
+  ),
+  tar_target(
+    nullfreeprune_dbgv4,
+    gv(nullfreeprune_db4)
   ),
 
   tar_target(
@@ -417,6 +476,36 @@ list(
   tar_target(
     nullfreetrim_dbgv5,
     gv(nullfreetrim_db5)
+  ),
+
+  tar_target(
+    prunedembed5,
+    remove_vacuous_embeddings(embed5, gefds5)
+  ),
+  tar_target(
+    pruned_pfds5,
+    pfds5[names(pfds5) %in% prunedembed5$N]
+  ),
+  tar_target(
+    pruned_gefds5,
+    gefds5[names(gefds5) %in% prunedembed5$N]
+  ),
+  tar_target(
+    prekeyprune_schema5,
+    prekey_schemas(pruned_gefds5, remove_avoidable = TRUE)
+  ),
+  tar_target(
+    nullfreeprune_schema5,
+    add_partitions(prekeyprune_schema5, pruned_pfds5, prunedembed5) |>
+      collapse_schemas()
+  ),
+  tar_target(
+    nullfreeprune_db5,
+    decompose_embedded(ex5, nullfreeprune_schema5, prunedembed5)
+  ),
+  tar_target(
+    nullfreeprune_dbgv5,
+    gv(nullfreeprune_db5)
   ),
 
   tar_quarto(
