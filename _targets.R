@@ -216,7 +216,7 @@ list(
   ),
   tar_target(
     nullfree_dbgv2,
-    gv(nullfree_db2)
+    gv_embed(nullfree_db2, embed2)
   ),
   tar_target(
     prunedembed2,
@@ -245,7 +245,7 @@ list(
   ),
   tar_target(
     nullfreeprune_dbgv2,
-    gv(nullfreeprune_db2)
+    gv_embed(nullfreeprune_db2, prunedembed2)
   ),
 
   tar_target(
@@ -335,7 +335,7 @@ list(
   ),
   tar_target(
     nullfree_dbgv4,
-    gv(nullfree_db4)
+    gv_embed(nullfree_db4, embed4)
   ),
 
   tar_target(
@@ -365,7 +365,7 @@ list(
   ),
   tar_target(
     nullfreeprune_dbgv4,
-    gv(nullfreeprune_db4)
+    gv_embed(nullfreeprune_db4, prunedembed4)
   ),
 
   tar_target(
@@ -475,7 +475,7 @@ list(
   ),
   tar_target(
     nullfreetrim_dbgv5,
-    gv(nullfreetrim_db5)
+    gv_embed(nullfreetrim_db5, embed5)
   ),
 
   tar_target(
@@ -505,7 +505,7 @@ list(
   ),
   tar_target(
     nullfreeprune_dbgv5,
-    gv(nullfreeprune_db5)
+    gv_embed(nullfreeprune_db5, prunedembed5)
   ),
 
   tar_quarto(

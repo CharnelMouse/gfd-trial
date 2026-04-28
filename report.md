@@ -1079,9 +1079,6 @@ so there’s nothing marking the main value/variable tables
 (`[iv, ¬ludp1p2]` and `[ilud, ¬v]`) as disjoint on `id`. For that, we’ll
 need to start thinking about how to track, and plot, distributed keys.
 
-We could also do with grouping relations from the same embedding
-together in the plot. I’ll do that first, because it should be simpler.
-
 ## Session info
 
 ``` r

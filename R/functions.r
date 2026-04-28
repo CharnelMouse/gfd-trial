@@ -501,3 +501,37 @@ remove_vacuous_embeddings <- function(x, gefds) {
   x$V <- x$V[!empty, , drop = FALSE]
   x
 }
+
+gv_embed <- function(x, embeds) {
+  main_gv <- strsplit(gv(x), "\n")[[1]]
+  dbs <- split(
+    x,
+    strsplit(names(x), "::") |> sapply(`[[`, 1)
+  )
+  gvs <- lapply(dbs, \(x) strsplit(gv(x), "\n")[[1]])
+  subgvs <- lapply(
+    setNames(nm = names(gvs)),
+    \(nm) {
+      x <- gvs[[nm]]
+      x <- sub("^digraph", paste0("subgraph cluster_", match(nm, names(gvs))), x)
+      x <- gsub(">\\[[^]]+\\]::", ">", x)
+      x <- append(x, paste0("  label = \"", nm, "\""), after = 1)
+      x <- append(x, paste0("  color = lightgrey"), after = 2)
+      x
+    }
+  )
+  gv_clusters <- Reduce(c, subgvs, init = character())
+  rem_gv <- setdiff(main_gv, gv_clusters) |>
+    grep(pattern = "<TR>", value = TRUE, invert = TRUE)
+  rem_gv <- gsub(">\\[[^]]+\\]::", ">", rem_gv)
+  paste(
+    c(
+      rem_gv[1],
+      "  rankdir = \"LR\"",
+      paste0("  ", gv_clusters),
+      rem_gv[-1],
+      "}"
+    ),
+    collapse = "\n"
+  )
+}
