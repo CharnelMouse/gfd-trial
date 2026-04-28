@@ -132,7 +132,7 @@ read_dot(tar_read(gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-16.png"
+<img src="report_files\figure-commonmark\dot-figure-17.png"
 style="height:5in" />
 
 </div>
@@ -162,7 +162,7 @@ read_dot(tar_read(gv_ideal2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-15.png"
+<img src="report_files\figure-commonmark\dot-figure-16.png"
 style="height:5in" />
 
 </div>
@@ -448,7 +448,7 @@ read_dot(tar_read(dot_all_embed2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-14.png"
+<img src="report_files\figure-commonmark\dot-figure-15.png"
 style="height:5in" />
 
 </div>
@@ -474,7 +474,7 @@ read_dot(tar_read(dot_embed2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-13.png"
+<img src="report_files\figure-commonmark\dot-figure-14.png"
 style="height:5in" />
 
 </div>
@@ -498,7 +498,7 @@ read_dot(tar_read(dot_embed3))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-12.png"
+<img src="report_files\figure-commonmark\dot-figure-13.png"
 style="height:5in" />
 
 </div>
@@ -643,7 +643,7 @@ read_dot(tar_read(nullfree_gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-11.png"
+<img src="report_files\figure-commonmark\dot-figure-12.png"
 style="height:5in" />
 
 </div>
@@ -664,7 +664,7 @@ read_dot(tar_read(nullfree_dbgv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-10.png"
+<img src="report_files\figure-commonmark\dot-figure-11.png"
 style="height:5in" />
 
 </div>
@@ -721,7 +721,7 @@ read_dot(tar_read(dot_embed5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-9.png"
+<img src="report_files\figure-commonmark\dot-figure-10.png"
 style="height:5in" />
 
 </div>
@@ -770,7 +770,7 @@ read_dot(tar_read(nullfree_dbgv5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-8.png"
+<img src="report_files\figure-commonmark\dot-figure-9.png"
 style="height:5in" />
 
 </div>
@@ -798,7 +798,7 @@ read_dot(tar_read(nullfreetrim_dbgv5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-7.png"
+<img src="report_files\figure-commonmark\dot-figure-8.png"
 style="height:5in" />
 
 </div>
@@ -917,7 +917,7 @@ read_dot(tar_read(dot_embed4))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-6.png"
+<img src="report_files\figure-commonmark\dot-figure-7.png"
 style="height:5in" />
 
 </div>
@@ -988,7 +988,7 @@ read_dot(tar_read(nullfree_dbgv4))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-5.png"
+<img src="report_files\figure-commonmark\dot-figure-6.png"
 style="height:5in" />
 
 </div>
@@ -1021,7 +1021,7 @@ read_dot(tar_read(nullfreeprune_dbgv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-4.png"
+<img src="report_files\figure-commonmark\dot-figure-5.png"
 style="height:5in" />
 
 </div>
@@ -1043,7 +1043,7 @@ read_dot(tar_read(nullfreeprune_dbgv5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-3.png"
+<img src="report_files\figure-commonmark\dot-figure-4.png"
 style="height:5in" />
 
 </div>
@@ -1064,7 +1064,7 @@ read_dot(tar_read(nullfreeprune_dbgv4))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-2.png"
+<img src="report_files\figure-commonmark\dot-figure-3.png"
 style="height:5in" />
 
 </div>
@@ -1078,6 +1078,31 @@ off: we removed the top embedding, but didn’t keep the distributed key,
 so there’s nothing marking the main value/variable tables
 (`[iv, ¬ludp1p2]` and `[ilud, ¬v]`) as disjoint on `id`. For that, we’ll
 need to start thinking about how to track, and plot, distributed keys.
+
+We also need to decide how to remove the transitive foreign keys that
+emerge from removing empty embeddings, as shown above. This can wait
+until we’re showing the distributed keys, I think.
+
+Here’s where I’d like to get to:
+
+``` r
+read_dot(paste(readLines(tar_read(goal4)), collapse = "\n"))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-2.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
 
 ## Session info
 

@@ -508,6 +508,12 @@ list(
     gv_embed(nullfreeprune_db5, prunedembed5)
   ),
 
+  tar_target(
+    goal4,
+    "goal4.dot",
+    format = "file"
+  ),
+
   tar_quarto(
     report,
     "report.qmd",

@@ -399,6 +399,12 @@ This last one is roughly right, but illustrates something we've left off: we rem
 
 We also need to decide how to remove the transitive foreign keys that emerge from removing empty embeddings, as shown above. This can wait until we're showing the distributed keys, I think.
 
+Here's where I'd like to get to:
+
+```{r, results='asis'}
+read_dot(paste(readLines(tar_read(goal4)), collapse = "\n"))
+```
+
 ## Session info
 
 ```{r}
