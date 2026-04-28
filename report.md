@@ -101,7 +101,7 @@ However, this approach does not properly handle missing values (`NA` in
 R, `NULL` in most RDBMSs). Consider the following table:
 
 ``` r
-tar_read(ex2)
+tar_read(data.ex2)
 ```
 
       id start end
@@ -337,7 +337,7 @@ As a test that `apriori` searches for everything we want, we use the
 following example of a presence indicator matrix.
 
 ``` r
-tar_read(ex3)
+tar_read(presence.ex3)
 ```
 
            a     b     c     d
@@ -360,17 +360,18 @@ Here are the non-dominated rules found:
 tar_read(minrulefds3)
 ```
 
-    2 functional dependencies
-    4 attributes: a, b, c, d
-    a -> b
-    c -> d
+        LHS RHS   support confidence  coverage lift count
+    1   {a} {b} 0.3333333          1 0.3333333  1.5     2
+    2   {c} {d} 0.3333333          1 0.3333333  1.2     2
+    3 {a,d} {b} 0.1666667          1 0.1666667  1.5     1
+    4 {b,c} {d} 0.1666667          1 0.1666667  1.2     1
 
 Not everything is found, because only the positive cases are used. We
 can fix this by doubling up on every variable, producing both presence
 and absence columns:
 
 ``` r
-tar_read(dpres3)
+tar_read(double_presence.ex3)
 ```
 
            a     b     c     d    ¬a    ¬b    ¬c    ¬d
@@ -384,21 +385,21 @@ tar_read(dpres3)
 The results are more like what we’d expect:
 
 ``` r
-tar_read(mindrulefds3)
+tar_read(minimal_presence_rule_fds.ex3)
 ```
 
     10 functional dependencies
     8 attributes: a, b, c, d, ¬a, ¬b, ¬c, ¬d
     ¬d -> a
     ¬d -> b
+    ¬d -> ¬c
      a -> b
+     a -> ¬c
+    ¬b -> ¬a
     ¬b -> d
+     c -> ¬a
      c -> d
     ¬a -> d
-    ¬b -> ¬a
-     c -> ¬a
-    ¬d -> ¬c
-     a -> ¬c
 
 We can also remove transitive “dependencies” to get something more
 minimal:
@@ -411,10 +412,10 @@ tar_read(minntdrulefds3)
     8 attributes: a, b, c, d, ¬a, ¬b, ¬c, ¬d
     ¬d -> a
      a -> b
-    ¬a -> d
+     a -> ¬c
     ¬b -> ¬a
      c -> ¬a
-     a -> ¬c
+    ¬a -> d
 
 More usefully for our current purposes, we could also group dependants
 by determinants, to find which presence values determine which others:
@@ -426,8 +427,8 @@ tar_read(grpfds3)
       det      dep
     1  ¬d a, b, ¬c
     2   a    b, ¬c
-    3  ¬b    d, ¬a
-    4   c    d, ¬a
+    3  ¬b    ¬a, d
+    4   c    ¬a, d
     5  ¬a        d
 
 ### Embedding pruning
@@ -439,7 +440,7 @@ are considering. As an example, here are the possible embeddings for the
 interval example:
 
 ``` r
-read_dot(tar_read(dot_all_embed2))
+read_dot(tar_read(dot_all_embeddings.ex2))
 ```
 
 <div>
@@ -465,7 +466,7 @@ We can then take our discovered presence rules for the interval data –
 just the relevant embeddings.
 
 ``` r
-read_dot(tar_read(dot_embed2))
+read_dot(tar_read(dot_searched_embeddings.ex2))
 ```
 
 <div>
@@ -489,7 +490,7 @@ present, and the children split this on whether `end` is present.
 Does this work for our presence example, too?
 
 ``` r
-read_dot(tar_read(dot_embed3))
+read_dot(tar_read(dot_searched_embeddings.ex3))
 ```
 
 <div>
@@ -529,7 +530,7 @@ of `W`, and `w'` is the corresponding set-tuple of `w`.
 Here are the results for the interval data:
 
 ``` r
-tar_read(pfds2)
+tar_read(presence_fds.ex2)
 ```
 
     $`[id, start]`
@@ -560,7 +561,7 @@ Again, we remove anything implied in parent embeddings.
 Here are the results for the interval data:
 
 ``` r
-tar_read(gefds2)
+tar_read(gefds.ex2)
 ```
 
     $`[id, start]`
@@ -604,7 +605,7 @@ include the embedding in their name, to keep them distinguishable when
 we join the schemas together later.
 
 ``` r
-tar_read(prekey_schema2)
+tar_read(prekey_schema.ex2)
 ```
 
     $`[id, start]`
@@ -634,7 +635,7 @@ relation with that attribute as the key. We then combine the embedding
 schemas, and connect those key relations together.
 
 ``` r
-read_dot(tar_read(nullfree_gv2))
+read_dot(tar_read(gv_nullfree_schema.ex2))
 ```
 
 <div>
@@ -655,7 +656,7 @@ style="height:5in" />
 Looking good! All that remains is to insert the data:
 
 ``` r
-read_dot(tar_read(nullfree_dbgv2))
+read_dot(tar_read(gv_nullfree_db.ex2))
 ```
 
 <div>
@@ -681,7 +682,7 @@ distributed foreign key, but this is fine for now.
 As another simple test, consider the following:
 
 ``` r
-tar_read(ex5)
+tar_read(data.ex5)
 ```
 
         a b  c
@@ -701,7 +702,7 @@ tar_read(ex5)
 Minimal presence rules:
 
 ``` r
-tar_read(mindrulefds5)
+tar_read(minimal_presence_rule_fds.ex5)
 ```
 
     2 functional dependencies
@@ -712,7 +713,7 @@ tar_read(mindrulefds5)
 Remaining embeddings:
 
 ``` r
-read_dot(tar_read(dot_embed5))
+read_dot(tar_read(dot_searched_embeddings.ex5))
 ```
 
 <div>
@@ -733,7 +734,7 @@ style="height:5in" />
 Presence dependencies:
 
 ``` r
-tar_read(pfds5)[lengths(tar_read(pfds5)) > 0]
+tar_read(presence_fds.ex5)[lengths(tar_read(presence_fds.ex5)) > 0]
 ```
 
     $`[a, b]`
@@ -745,7 +746,7 @@ tar_read(pfds5)[lengths(tar_read(pfds5)) > 0]
 GEFDs:
 
 ``` r
-tar_read(gefds5)[lengths(tar_read(gefds5)) > 0]
+tar_read(gefds.ex5)[lengths(tar_read(gefds.ex5)) > 0]
 ```
 
     $`[a, b]`
@@ -761,7 +762,7 @@ tar_read(gefds5)[lengths(tar_read(gefds5)) > 0]
 Final database:
 
 ``` r
-read_dot(tar_read(nullfree_dbgv5))
+read_dot(tar_read(gv_nullfree_db.ex5))
 ```
 
 <div>
@@ -814,34 +815,34 @@ This has its own problems, of course.
 To test everything works, here’s another, more elaborate example:
 
 ``` r
-tar_read(ex4)
+tar_read(data.ex4)
 ```
 
-       id value lower_bound upper_bound interval_distribution param1 param2
-    1   1   2.3          NA          NA                  <NA>     NA     NA
-    2   2   2.3          NA          NA                  <NA>     NA     NA
-    3   3   5.7          NA          NA                  <NA>     NA     NA
-    4   4    NA         2.4         7.1               uniform     NA     NA
-    5   5    NA         0.0        10.0               uniform     NA     NA
-    6   6    NA         1.0        10.0               uniform     NA     NA
-    7   7    NA         0.0        13.1               uniform     NA     NA
-    8   8    NA         5.6        25.8               uniform     NA     NA
-    9   9    NA         0.0        13.1                arcsin     NA     NA
-    10 10    NA         5.6        25.8                arcsin     NA     NA
-    11 11    NA         2.4        10.0                  Beta    1.0      1
-    12 12    NA         5.3        13.1                  Beta    1.0      2
-    13 13    NA         5.3        10.0                  Beta    1.0      2
-    14 14    NA         2.4        25.8                  Beta    2.0      2
-    15 15    NA         2.4        25.8           Kumaraswamy    2.0      2
-    16 16    NA         2.4        25.8           Kumaraswamy    2.1      1
-    17 17    NA         2.4        25.8           Kumaraswamy    2.0      1
-    18 18    NA         2.4        13.1           Kumaraswamy    2.0      1
-    19 19    NA         2.4        13.1                  PERT    2.0     NA
-    20 20    NA         2.4        25.8                  PERT    1.0     NA
-    21 21    NA         5.6        25.8                  PERT    2.0     NA
-    22 22    NA         2.4        25.8                  PERT    2.0     NA
-    23 23    NA         5.6        25.8                Wigner    2.0     NA
-    24 24    NA         2.4        25.8                Wigner    2.0     NA
+       id value lower_bound upper_bound distribution param1 param2
+    1   1   2.3          NA          NA         <NA>     NA     NA
+    2   2   2.3          NA          NA         <NA>     NA     NA
+    3   3   5.7          NA          NA         <NA>     NA     NA
+    4   4    NA         2.4         7.1      uniform     NA     NA
+    5   5    NA         0.0        10.0      uniform     NA     NA
+    6   6    NA         1.0        10.0      uniform     NA     NA
+    7   7    NA         0.0        13.1      uniform     NA     NA
+    8   8    NA         5.6        25.8      uniform     NA     NA
+    9   9    NA         0.0        13.1       arcsin     NA     NA
+    10 10    NA         5.6        25.8       arcsin     NA     NA
+    11 11    NA         2.4        10.0         Beta    1.0      1
+    12 12    NA         5.3        13.1         Beta    1.0      2
+    13 13    NA         5.3        10.0         Beta    1.0      2
+    14 14    NA         2.4        25.8         Beta    2.0      2
+    15 15    NA         2.4        25.8  Kumaraswamy    2.0      2
+    16 16    NA         2.4        25.8  Kumaraswamy    2.1      1
+    17 17    NA         2.4        25.8  Kumaraswamy    2.0      1
+    18 18    NA         2.4        13.1  Kumaraswamy    2.0      1
+    19 19    NA         2.4        13.1         PERT    2.0     NA
+    20 20    NA         2.4        25.8         PERT    1.0     NA
+    21 21    NA         5.6        25.8         PERT    2.0     NA
+    22 22    NA         2.4        25.8         PERT    2.0     NA
+    23 23    NA         5.6        25.8       Wigner    2.0     NA
+    24 24    NA         2.4        25.8       Wigner    2.0     NA
 
 This has structure similar to the previous one, where the attribute that
 determines whether another is present is not the attribute that
@@ -856,7 +857,7 @@ of the limited data sample.
 Minimal presence rules:
 
 ``` r
-tar_read(mindrulefds4)
+tar_read(minimal_presence_rule_fds.ex4)
 ```
 
     43 functional dependencies
@@ -908,7 +909,7 @@ tar_read(mindrulefds4)
 Remaining embeddings:
 
 ``` r
-read_dot(tar_read(dot_embed4))
+read_dot(tar_read(dot_searched_embeddings.ex4))
 ```
 
 <div>
@@ -929,7 +930,7 @@ style="height:5in" />
 Presence dependencies:
 
 ``` r
-tar_read(pfds4)[lengths(tar_read(pfds4)) > 0]
+tar_read(presence_fds.ex4)[lengths(tar_read(presence_fds.ex4)) > 0]
 ```
 
     $`[i]`
@@ -951,7 +952,7 @@ tar_read(pfds4)[lengths(tar_read(pfds4)) > 0]
 GEFDs:
 
 ``` r
-tar_read(gefds4)[lengths(tar_read(gefds4)) > 0]
+tar_read(gefds.ex4)[lengths(tar_read(gefds.ex4)) > 0]
 ```
 
     $`[i, ¬v, l, u, d]`
@@ -979,7 +980,7 @@ tar_read(gefds4)[lengths(tar_read(gefds4)) > 0]
 Final database:
 
 ``` r
-read_dot(tar_read(nullfree_dbgv4))
+read_dot(tar_read(gv_nullfree_db.ex4))
 ```
 
 <div>
@@ -1012,7 +1013,7 @@ side of them.
 Here’s the trimmed version of the interval example:
 
 ``` r
-read_dot(tar_read(nullfreeprune_dbgv2))
+read_dot(tar_read(gv_pruned_nullfree_db.ex2))
 ```
 
 <div>
@@ -1034,7 +1035,7 @@ For the simple example where the presence-determining attribute isn’t
 the value determining attribute:
 
 ``` r
-read_dot(tar_read(nullfreeprune_dbgv5))
+read_dot(tar_read(gv_pruned_nullfree_db.ex5))
 ```
 
 <div>
@@ -1055,7 +1056,7 @@ style="height:5in" />
 For the distribution data:
 
 ``` r
-read_dot(tar_read(nullfreeprune_dbgv4))
+read_dot(tar_read(gv_pruned_nullfree_db.ex4))
 ```
 
 <div>

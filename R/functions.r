@@ -506,7 +506,7 @@ gv_embed <- function(x, embeds) {
   main_gv <- strsplit(gv(x), "\n")[[1]]
   dbs <- split(
     x,
-    strsplit(names(x), "::") |> sapply(`[[`, 1)
+    strsplit(names(x), "::") |> vapply(`[[`, character(1), 1)
   )
   gvs <- lapply(dbs, \(x) strsplit(gv(x), "\n")[[1]])
   subgvs <- lapply(
