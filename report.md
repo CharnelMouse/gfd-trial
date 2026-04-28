@@ -1008,7 +1008,8 @@ style="height:5in" />
 
 </div>
 
-The partition keys aren’t being matched up properly here.
+This looks about right: we can see the two key relation hierarchies for
+`id` and `d`.
 
 ## Session info
 

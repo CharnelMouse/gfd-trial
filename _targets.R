@@ -203,7 +203,8 @@ list(
   ),
   tar_target(
     nullfree_schema2,
-    add_partitions(prekey_schema2, pfds2, embed2)
+    add_partitions(prekey_schema2, pfds2, embed2) |>
+      collapse_schemas()
   ),
   tar_target(
     nullfree_gv2,
@@ -292,7 +293,8 @@ list(
   ),
   tar_target(
     nullfree_schema4,
-    add_partitions(prekey_schema4, pfds4, embed4)
+    add_partitions(prekey_schema4, pfds4, embed4) |>
+      collapse_schemas()
   ),
   tar_target(
     nullfree_gv4,
@@ -370,7 +372,8 @@ list(
   ),
   tar_target(
     nullfree_schema5,
-    add_partitions(prekey_schema5, pfds5, embed5)
+    add_partitions(prekey_schema5, pfds5, embed5) |>
+      collapse_schemas()
   ),
   tar_target(
     nullfree_gv5,
@@ -400,7 +403,8 @@ list(
   ),
   tar_target(
     nullfreetrim_schema5,
-    add_partitions(prekey_schema5, pfdstrim5, embed5)
+    add_partitions(prekey_schema5, pfdstrim5, embed5) |>
+      collapse_schemas()
   ),
   tar_target(
     nullfreetrim_gv5,

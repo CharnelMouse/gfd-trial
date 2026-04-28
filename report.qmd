@@ -371,7 +371,7 @@ Final database:
 read_dot(tar_read(nullfree_dbgv4))
 ```
 
-The partition keys aren't being matched up properly here.
+This looks about right: we can see the two key relation hierarchies for `id` and `d`.
 
 ## Session info
 

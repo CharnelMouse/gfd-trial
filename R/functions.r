@@ -362,7 +362,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
       ks <- keys(embed_schemas[[ch]])
       in_keys <- vapply(
         ks,
-        \(x) any(vapply(x, is.element, logical(1), el = key)),
+        \(x) any(vapply(x, identical, logical(1), key)),
         logical(1)
       )
       if (any(in_keys)) {
