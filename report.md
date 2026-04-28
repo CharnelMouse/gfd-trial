@@ -632,7 +632,9 @@ tar_read(prekey_schema.ex2)
 For each connected pair of embeddings, we know which attribute is
 associated with that edge. We ensure each of those embeddings has a
 relation with that attribute as the key. We then combine the embedding
-schemas, and connect those key relations together.
+schemas, and connect those key relations together. We keep the embedding
+criteria as a label for the embedding rather than within the individual
+schema names, to prevent them from getting cluttered.
 
 ``` r
 read_dot(tar_read(gv_nullfree_schema.ex2))

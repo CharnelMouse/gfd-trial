@@ -215,7 +215,7 @@ list(
     ),
     tar_target(
       gv_nullfree_schema,
-      gv(nullfree_schema)
+      gv_embed(nullfree_schema, searched_embeddings)
     ),
     tar_target(
       nullfree_db,
@@ -223,7 +223,7 @@ list(
     ),
     tar_target(
       gv_nullfree_db,
-      gv(nullfree_db)
+      gv_embed(nullfree_db, searched_embeddings)
     ),
 
     # pruned version with key-only embeddings removed
