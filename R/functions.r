@@ -408,18 +408,26 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
       x
     }
   )
+  list(
+    schemas = augmented_schemas,
+    attrs_order = colnames(embeds$V),
+    interrefs = new_refs
+  )
+}
+
+collapse_schemas <- function(x) {
   res <- Reduce(
     f = c,
-    augmented_schemas,
+    x$schemas,
     init = database_schema(
       relation_schema(
         setNames(list(), character()),
-        colnames(embeds$V)
+        x$attrs_order
       ),
       list()
     )
   )
-  references(res) <- c(references(res), new_refs)
+  references(res) <- c(references(res), x$interrefs)
   res
 }
 
