@@ -12,7 +12,19 @@ read_dot <- function(dot) {
   )
 }
 library(autodb, warn.conflicts = FALSE)
+library(arules)
 ```
+
+    Warning: package 'arules' was built under R version 4.5.3
+
+    Loading required package: Matrix
+
+
+    Attaching package: 'arules'
+
+    The following objects are masked from 'package:base':
+
+        abbreviate, write
 
 ## Replication
 
@@ -132,7 +144,7 @@ read_dot(tar_read(gv2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-17.png"
+<img src="report_files\figure-commonmark\dot-figure-20.png"
 style="height:5in" />
 
 </div>
@@ -162,7 +174,7 @@ read_dot(tar_read(gv_ideal2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-16.png"
+<img src="report_files\figure-commonmark\dot-figure-19.png"
 style="height:5in" />
 
 </div>
@@ -449,7 +461,7 @@ read_dot(tar_read(dot_all_embeddings.ex2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-15.png"
+<img src="report_files\figure-commonmark\dot-figure-18.png"
 style="height:5in" />
 
 </div>
@@ -475,7 +487,7 @@ read_dot(tar_read(dot_searched_embeddings.ex2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-14.png"
+<img src="report_files\figure-commonmark\dot-figure-17.png"
 style="height:5in" />
 
 </div>
@@ -499,7 +511,7 @@ read_dot(tar_read(dot_searched_embeddings.ex3))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-13.png"
+<img src="report_files\figure-commonmark\dot-figure-16.png"
 style="height:5in" />
 
 </div>
@@ -646,7 +658,7 @@ read_dot(tar_read(gv_nullfree_schema.ex2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-12.png"
+<img src="report_files\figure-commonmark\dot-figure-15.png"
 style="height:5in" />
 
 </div>
@@ -667,7 +679,7 @@ read_dot(tar_read(gv_nullfree_db.ex2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-11.png"
+<img src="report_files\figure-commonmark\dot-figure-14.png"
 style="height:5in" />
 
 </div>
@@ -724,7 +736,7 @@ read_dot(tar_read(dot_searched_embeddings.ex5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-10.png"
+<img src="report_files\figure-commonmark\dot-figure-13.png"
 style="height:5in" />
 
 </div>
@@ -773,7 +785,7 @@ read_dot(tar_read(gv_nullfree_db.ex5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-9.png"
+<img src="report_files\figure-commonmark\dot-figure-12.png"
 style="height:5in" />
 
 </div>
@@ -801,7 +813,7 @@ read_dot(tar_read(nullfreetrim_dbgv5))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-8.png"
+<img src="report_files\figure-commonmark\dot-figure-11.png"
 style="height:5in" />
 
 </div>
@@ -813,6 +825,126 @@ style="height:5in" />
 This has its own problems, of course.
 
 ## Test 2
+
+Another interesting small case is the one where we have no information
+in the main embedding. For example, suppose the key is the only
+non-nullable set of attributes:
+
+``` r
+tar_read(data.ex6)
+```
+
+      a  b  c
+    1 1  1 NA
+    2 2  1 NA
+    3 3  2 NA
+    4 4 NA  1
+    5 5 NA  1
+    6 6 NA  2
+
+Minimal presence rules:
+
+``` r
+tar_read(minimal_presence_rule_fds.ex6)
+```
+
+    5 functional dependencies
+    6 attributes: a, b, c, ¬a, ¬b, ¬c
+       -> a
+     b -> ¬c
+    ¬c -> b
+     c -> ¬b
+    ¬b -> c
+
+Remaining embeddings:
+
+``` r
+read_dot(tar_read(dot_searched_embeddings.ex6))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-10.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+Presence dependencies:
+
+``` r
+tar_read(presence_fds.ex6)[lengths(tar_read(presence_fds.ex6)) > 0]
+```
+
+    $`[a]`
+    2 functional dependencies
+    3 attributes: a, b, c
+    a -> b
+    a -> c
+
+GEFDs:
+
+``` r
+tar_read(gefds.ex4)[lengths(tar_read(gefds.ex6)) > 0]
+```
+
+    $`[i, ¬v, l, u, d]`
+    3 functional dependencies
+    4 attributes: i, l, u, d
+    i -> l
+    i -> u
+    i -> d
+
+    $`[i, ¬v, l, u, d, p1]`
+    1 functional dependency
+    5 attributes: i, l, u, d, p1
+    i -> p1
+
+    $`[i, ¬v, l, u, d, ¬p2]`
+    0 functional dependencies
+    4 attributes: i, l, u, d
+
+    $`[i, ¬p1, ¬p2]`
+    0 functional dependencies
+    1 attribute: i
+
+    $`[i, ¬v, l, u, d, ¬p1, ¬p2]`
+    0 functional dependencies
+    4 attributes: i, l, u, d
+
+    $`[i, ¬v, l, u, d, p1, ¬p2]`
+    0 functional dependencies
+    5 attributes: i, l, u, d, p1
+
+Final database:
+
+``` r
+read_dot(tar_read(gv_nullfree_db.ex6))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
+<img src="report_files\figure-commonmark\dot-figure-9.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+## Test 3
 
 To test everything works, here’s another, more elaborate example:
 
@@ -920,7 +1052,7 @@ read_dot(tar_read(dot_searched_embeddings.ex4))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-7.png"
+<img src="report_files\figure-commonmark\dot-figure-8.png"
 style="height:5in" />
 
 </div>
@@ -991,7 +1123,7 @@ read_dot(tar_read(gv_nullfree_db.ex4))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-6.png"
+<img src="report_files\figure-commonmark\dot-figure-7.png"
 style="height:5in" />
 
 </div>
@@ -1024,7 +1156,7 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex2))
 
 <div>
 
-<img src="report_files\figure-commonmark\dot-figure-5.png"
+<img src="report_files\figure-commonmark\dot-figure-6.png"
 style="height:5in" />
 
 </div>
@@ -1046,6 +1178,28 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex5))
 
 <div>
 
+<img src="report_files\figure-commonmark\dot-figure-5.png"
+style="height:5in" />
+
+</div>
+
+</figure>
+
+</div>
+
+Pruning the example with an empty main embedding shows an issue in our
+plots:
+
+``` r
+read_dot(tar_read(gv_pruned_nullfree_db.ex6))
+```
+
+<div>
+
+<figure class=''>
+
+<div>
+
 <img src="report_files\figure-commonmark\dot-figure-4.png"
 style="height:5in" />
 
@@ -1055,7 +1209,13 @@ style="height:5in" />
 
 </div>
 
-For the distribution data:
+The remaining relations aren’t joined together at all! Removing the main
+embedding still leaves us with a distributed key between the two
+sub-embeddings, that makes them disjoint, but we’re not currently
+showing those.
+
+The distribution data has a similar problem for the distributed key
+between embeddings `[iv, ¬ludp1p2]` and `[ilud, ¬v]`:
 
 ``` r
 read_dot(tar_read(gv_pruned_nullfree_db.ex4))
@@ -1075,12 +1235,6 @@ style="height:5in" />
 </figure>
 
 </div>
-
-This last one is roughly right, but illustrates something we’ve left
-off: we removed the top embedding, but didn’t keep the distributed key,
-so there’s nothing marking the main value/variable tables
-(`[iv, ¬ludp1p2]` and `[ilud, ¬v]`) as disjoint on `id`. For that, we’ll
-need to start thinking about how to track, and plot, distributed keys.
 
 We also need to decide how to remove the transitive foreign keys that
 emerge from removing empty embeddings, as shown above. This can wait
@@ -1134,15 +1288,16 @@ sessionInfo()
     [1] stats     graphics  grDevices utils     datasets  methods   base     
 
     other attached packages:
-    [1] autodb_3.2.4.9000 targets_1.11.4   
+    [1] arules_1.7.14     Matrix_1.7-4      autodb_3.2.4.9000 targets_1.11.4   
 
     loaded via a namespace (and not attached):
      [1] vctrs_0.6.5       cli_3.6.5         knitr_1.50        rlang_1.1.7      
-     [5] xfun_0.54         processx_3.8.6    jsonlite_2.0.0    data.table_1.17.8
-     [9] glue_1.8.0        prettyunits_1.2.0 backports_1.5.0   htmltools_0.5.8.1
-    [13] ps_1.9.1          rmarkdown_2.30    evaluate_1.0.5    tibble_3.3.0     
-    [17] base64url_1.4     fastmap_1.2.0     yaml_2.3.10       lifecycle_1.0.4  
-    [21] compiler_4.5.2    codetools_0.2-20  igraph_2.2.1      pkgconfig_2.0.3  
-    [25] rstudioapi_0.17.1 digest_0.6.37     R6_2.6.1          tidyselect_1.2.1 
-    [29] pillar_1.11.1     callr_3.7.6       magrittr_2.0.4    withr_3.0.2      
-    [33] tools_4.5.2       secretbase_1.1.1 
+     [5] xfun_0.54         processx_3.8.6    generics_0.1.4    jsonlite_2.0.0   
+     [9] data.table_1.17.8 glue_1.8.0        prettyunits_1.2.0 backports_1.5.0  
+    [13] htmltools_0.5.8.1 ps_1.9.1          rmarkdown_2.30    grid_4.5.2       
+    [17] evaluate_1.0.5    tibble_3.3.0      base64url_1.4     fastmap_1.2.0    
+    [21] yaml_2.3.10       lifecycle_1.0.4   compiler_4.5.2    codetools_0.2-20 
+    [25] igraph_2.2.1      pkgconfig_2.0.3   rstudioapi_0.17.1 lattice_0.22-7   
+    [29] digest_0.6.37     R6_2.6.1          tidyselect_1.2.1  pillar_1.11.1    
+    [33] callr_3.7.6       magrittr_2.0.4    withr_3.0.2       tools_4.5.2      
+    [37] secretbase_1.1.1 
