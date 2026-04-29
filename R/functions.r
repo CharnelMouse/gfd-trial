@@ -471,40 +471,43 @@ decompose_embedded <- function(x, schema, embeds) {
 remove_vacuous_embeddings <- function(x, gefds) {
   empty <- lengths(gefds) == 0
   x$E <- as.data.frame(x$E, check.names = FALSE)
-  for (n in which(empty)) {
-    grps <- tapply(
-      x$E,
-      vapply(x$A, toString, character(1)),
-      as.matrix,
-      simplify = FALSE
-    )
-    grps <- lapply(
-      grps,
-      \(g) {
-        new <- expand.grid(
-          child = x$E[x$E[, "parent"] == n, "child"],
-          parent = x$E[x$E[, "child"] == n, "parent"]
-        )
-        rbind(
-          g[g[, "child"] != n & g[, "parent"] != n, , drop = FALSE],
-          new
-        )
-      }
-    )
-    x$E <- Reduce(
-      rbind,
-      grps,
-      init = x$E[FALSE, , drop = FALSE]
-    )
-    x$A <- rep(names(grps), vapply(grps, nrow, integer(1))) |>
-      strsplit(", ")
-  }
-  x$E <- as.matrix(x$E)
+  grps <- tapply(
+    x$E,
+    vapply(x$A, toString, character(1)),
+    identity,
+    simplify = FALSE
+  )
+  grps <- lapply(
+    grps,
+    Reduce,
+    f = remove_embedding_from_fdks,
+    x = which(empty)
+  )
+  x$E <- as.matrix(Reduce(
+    rbind,
+    grps,
+    init = x$E[FALSE, , drop = FALSE]
+  ))
   x$E[] <- match(x$E, which(!empty))
   stopifnot(!anyNA(x$E))
+  x$A <- rep(
+    names(grps),
+    vapply(grps, nrow, integer(1))
+  ) |>
+    strsplit(", ")
   x$N <- x$N[!empty]
   x$V <- x$V[!empty, , drop = FALSE]
   x
+}
+
+remove_embedding_from_fdks <- function(g, n) {
+  rbind(
+    subset(g, child != n & parent != n),
+    expand.grid(
+      child = g$child[g$parent == n],
+      parent = g$parent[g$child == n]
+    )
+  )
 }
 
 gv_embed <- function(x, embeds) {
