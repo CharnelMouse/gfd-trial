@@ -18,7 +18,7 @@ read_dot <- function(dot) {
     sep = ""
   )
 }
-library(autodb, warn.conflicts = FALSE)
+library(autodb)
 library(arules)
 ```
 

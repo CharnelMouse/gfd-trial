@@ -11,7 +11,17 @@ read_dot <- function(dot) {
     sep = ""
   )
 }
-library(autodb, warn.conflicts = FALSE)
+library(autodb)
+```
+
+
+    Attaching package: 'autodb'
+
+    The following object is masked from 'package:stats':
+
+        decompose
+
+``` r
 library(arules)
 ```
 
