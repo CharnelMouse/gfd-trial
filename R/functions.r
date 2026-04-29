@@ -472,11 +472,15 @@ remove_vacuous_embeddings <- function(x, gefds) {
   empty <- lengths(gefds) == 0
   x$E <- as.data.frame(x$E, check.names = FALSE)
   for (n in which(empty)) {
-    grps <- split(x$E, vapply(x$A, toString, character(1)))
+    grps <- tapply(
+      x$E,
+      vapply(x$A, toString, character(1)),
+      as.matrix,
+      simplify = FALSE
+    )
     grps <- lapply(
       grps,
       \(g) {
-        g <- as.matrix(g)
         new <- expand.grid(
           child = x$E[x$E[, "parent"] == n, "child"],
           parent = x$E[x$E[, "child"] == n, "parent"]
