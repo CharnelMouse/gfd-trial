@@ -189,15 +189,15 @@ list(
     ),
     tar_target(
       dot_all_embeddings,
-      dot_emb(all_embeddings, NULL)
+      gv(all_embeddings)
     ),
     tar_target(
       searched_embeddings,
-      prune_embeddings(all_embeddings, minimal_presence_rule_fds)
+      prune(all_embeddings, minimal_presence_rule_fds)
     ),
     tar_target(
       dot_searched_embeddings,
-      dot_emb(searched_embeddings, NULL)
+      gv(searched_embeddings)
     ),
     tar_target(
       presence_fds,
@@ -236,7 +236,7 @@ list(
 
     tar_target(
       pruned_embeddings,
-      remove_vacuous_embeddings(searched_embeddings, gefds)
+      searched_embeddings[lengths(gefds) > 0]
     ),
     tar_target(
       pruned_presence_fds,
