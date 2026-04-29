@@ -331,6 +331,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
   new_refs <- list()
   for (n in seq_len(nrow(parts))) {
     key <- parts[[n, "key"]]
+    key_txt <- autodb:::make.gv_names(paste(key, collapse = "_"))
     parent <- parts[n, "embed"]
     ks <- keys(embed_schemas[[parent]])
     in_keys <- vapply(
@@ -342,7 +343,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
       stopifnot(sum(in_keys) == 1)
       parent_rel <- names(ks)[in_keys]
     }else{
-      new_relname <- paste0(parent, "::key_", n)
+      new_relname <- paste0(parent, "::", key_txt)
       embed_schemas[[parent]] <- c(
         embed_schemas[[parent]],
         database_schema(
@@ -370,7 +371,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
         stopifnot(sum(in_keys) == 1)
         child_rels <- c(child_rels, names(ks)[in_keys])
       }else{
-        new_relname <- paste0(ch, "::key_", n)
+        new_relname <- paste0(ch, "::", key_txt)
         embed_schemas[[ch]] <- c(
           embed_schemas[[ch]],
           database_schema(
