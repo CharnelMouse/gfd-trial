@@ -74,14 +74,15 @@ prune_embedding <- function(x, rules, ...) {
     for (r in seq_along(rules)) {
       detpres <- detset_mat[r, ]
       deppres <- depset_mat[r, ]
-      if (all(is.na(detpres) | (!is.na(new_bools) & detpres == new_bools))) {
-        if (all(is.na(deppres) | is.na(new_bools) | deppres == new_bools))
-          new_bools <- ifelse(is.na(deppres), new_bools, deppres)
-        else {
+      satisfies_det <- all(is.na(detpres) | (!is.na(new_bools) & detpres == new_bools))
+      coheres_with_dep <- all(is.na(deppres) | is.na(new_bools) | deppres == new_bools)
+      if (satisfies_det) {
+        if (!coheres_with_dep) {
           # remove
           new_bools <- NULL
           break
         }
+        new_bools <- ifelse(is.na(deppres), new_bools, deppres)
       }
     }
     if (is.null(new_bools)) {
