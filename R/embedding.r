@@ -5,7 +5,7 @@ embedding <- function(V, E, A, N) {
   )
 }
 
-gv.embedding <- function(x, name = NA_character_, ...) {
+gv_embedding <- function(x, name = NA_character_, ...) {
   dotV <- paste(
     seq_len(nrow(x$V)),
     " [label = \"",
@@ -26,11 +26,7 @@ gv.embedding <- function(x, name = NA_character_, ...) {
   paste("digraph {", dotV, dotE, "}", sep = "\n")
 }
 
-prune <- function(x, ...) {
-  UseMethod("prune")
-}
-
-prune.embedding <- function(x, rules, ...) {
+prune_embedding <- function(x, rules, ...) {
   # convert rule FDs assuming negated presence columns are all placed afterwards
   ao <- attrs_order(rules)
   stopifnot(length(ao) %% 2 == 0)

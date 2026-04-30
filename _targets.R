@@ -189,15 +189,15 @@ list(
     ),
     tar_target(
       dot_all_embeddings,
-      gv(all_embeddings)
+      gv_embedding(all_embeddings)
     ),
     tar_target(
       searched_embeddings,
-      prune(all_embeddings, minimal_presence_rule_fds)
+      prune_embedding(all_embeddings, minimal_presence_rule_fds)
     ),
     tar_target(
       dot_searched_embeddings,
-      gv(searched_embeddings)
+      gv_embedding(searched_embeddings)
     ),
     tar_target(
       presence_fds,
