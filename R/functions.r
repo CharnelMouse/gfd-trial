@@ -113,18 +113,7 @@ discover_presence <- function(x, embeds) {
       )
     }
   )
-  # remove anything already implied by ancestors
-  for (n in seq_along(embeds$N)) {
-    parents <- embeds$E[embeds$E[, "child"] == n, "parent"]
-    while (length(parents) > 0) {
-      for (p in parents) {
-        comp <- outer(res[[n]], res[[p]], `>=`)
-        res[[n]] <- res[[n]][apply(comp, 1, Negate(any))]
-      }
-      parents <- embeds$E[embeds$E[, "child"] %in% parents, "parent"]
-    }
-  }
-  res
+  remove_ancestor_fds(res, embeds)
 }
 
 discover_embedded <- function(x, embeds, ...) {
@@ -145,15 +134,19 @@ discover_embedded <- function(x, embeds, ...) {
       discover(sample, ...)
     }
   )
+  remove_ancestor_fds(res, embeds)
+}
+
+remove_ancestor_fds <- function(res, embeds) {
   # remove anything already implied by ancestors
   for (n in seq_along(embeds$N)) {
-    parents <- embeds$E[embeds$E[, "child"] == n, "parent"]
+    parents <- parents(embeds, n)
     while (length(parents) > 0) {
       for (p in parents) {
         comp <- outer(res[[n]], res[[p]], `>=`)
         res[[n]] <- res[[n]][apply(comp, 1, Negate(any))]
       }
-      parents <- embeds$E[embeds$E[, "child"] %in% parents, "parent"]
+      parents <- parents(embeds, parents)
     }
   }
   res
@@ -176,10 +169,10 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
   # fill with ancestors to ensure correct partition joins
   for (n in seq_along(embeds$N)) {
     nm <- embeds$N[[n]]
-    parents <- embeds$E[embeds$E[, "child"] == n, "parent"]
+    parents <- parents(embeds, n)
     full_pfds[[n]] <- unique(Reduce(c, full_pfds[parents], full_pfds[[n]]))
     while (length(parents) > 0) {
-      parents <- embeds$E[embeds$E[, "child"] %in% parents, "parent"]
+      parents <- parents(embeds, parents)
       full_pfds[[n]] <- unique(Reduce(
         c,
         lapply(

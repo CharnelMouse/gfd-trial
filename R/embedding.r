@@ -127,10 +127,10 @@ prune.embedding <- function(x, rules, ...) {
   x
 }
 
-`[.embedding` <- function(x, keep) {
+`[.embedding` <- function(x, i) {
   inds <- setNames(seq_along(x$N), x$N)
-  keep <- inds[keep]
-  rem <- inds[!is.element(inds, keep)]
+  i <- inds[i]
+  rem <- inds[!is.element(inds, i)]
   x$E <- as.data.frame(x$E, check.names = FALSE)
   grps <- tapply(
     x$E,
@@ -149,16 +149,24 @@ prune.embedding <- function(x, rules, ...) {
     grps,
     init = x$E[FALSE, , drop = FALSE]
   ))
-  x$E[] <- match(x$E, keep)
+  x$E[] <- match(x$E, i)
   stopifnot(!anyNA(x$E))
   x$A <- rep(
     names(grps),
     vapply(grps, nrow, integer(1))
   ) |>
     strsplit(", ")
-  x$N <- x$N[keep]
-  x$V <- x$V[keep, , drop = FALSE]
+  x$N <- x$N[i]
+  x$V <- x$V[i, , drop = FALSE]
   x
+}
+
+`[[.embedding` <- function(x, i) {
+  inds <- setNames(seq_along(x$N), x$N)
+  i <- try(inds[[i]], silent = TRUE)
+  if (class(i)[[1]] == "try-error")
+    stop(attr(i, "condition")$message)
+  x[i]
 }
 
 remove_embedding_from_fdks <- function(g, n) {
@@ -169,4 +177,12 @@ remove_embedding_from_fdks <- function(g, n) {
       parent = g$parent[g$child == n]
     )
   )
+}
+
+parents <- function(x, children) {
+  unique(x$E[, "parent"][x$E[, "child"] %in% children])
+}
+
+children <- function(x, parents) {
+  unique(x$E[, "child"][x$E[, "parent"] %in% parents])
 }
