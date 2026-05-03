@@ -386,13 +386,30 @@ decompose_embedded <- function(x, schema, embeds) {
 }
 
 gv_embed <- function(x, embeds) {
-  new_refs <- lapply(
+  stopifnot(all(is.element(
+    vapply(x$interrefs, \(y) length(y$children), integer(1)),
+    1:2
+  )))
+  new_fks <- x$interrefs[vapply(
     x$interrefs,
-    \(iref) lapply(iref$children, \(ch) c(ch, iref$parent))
-  ) |>
+    \(iref) length(iref$children) == 1,
+    logical(1)
+  )] |>
+    lapply(\(iref) c(iref$children[[1]], iref$parent))
+  new_fdks <- x$interrefs[vapply(
+    x$interrefs,
+    \(iref) length(iref$children) == 2,
+    logical(1)
+  )] |>
+    lapply(
+      \(iref) lapply(iref$children, \(ch) c(ch, iref$parent))
+    ) |>
     unlist(recursive = FALSE)
+
   x <- x$main
-  references(x) <- c(references(x), new_refs)
+  references(x) <- c(references(x), new_fks)
+  references(x) <- c(references(x), new_fdks)
+
   main_gv <- strsplit(gv(x), "\n")[[1]]
   dbs <- split(
     x,
