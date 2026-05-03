@@ -297,13 +297,13 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
     }
     new_refs <- c(
       new_refs,
-      lapply(
-        child_rels,
-        \(ch) list(
-          ch,
-          key,
-          parent_rel,
-          key
+      list(
+        list(
+          parent = list(parent_rel, key),
+          children = lapply(
+            child_rels,
+            \(ch) list(ch, key)
+          )
         )
       )
     )
@@ -336,13 +336,12 @@ collapse_schemas <- function(x) {
       list()
     )
   )
-  references(res) <- c(references(res), x$interrefs)
-  res
+  list(main = res, interrefs = x$interrefs)
 }
 
 decompose_embedded <- function(x, schema, embeds) {
   # insert parents first
-  refs <- references(schema)
+  refs <- references(schema$main)
   ref_embeds <- vapply(
     refs,
     \(ref) vapply(strsplit(c(ref[[1]], ref[[3]]), "::"), `[[`, character(1), 1),
@@ -351,7 +350,7 @@ decompose_embedded <- function(x, schema, embeds) {
   ref_embeds[] <- match(ref_embeds, embeds$N)
   ref_embeds <- ref_embeds[, ref_embeds[1, ] != ref_embeds[2, ], drop = FALSE]
   queue <- seq_along(embeds$N)
-  db <- create(schema)
+  db <- create(schema$main)
   while (length(queue) > 0) {
     candidates <- queue[!is.element(queue, ref_embeds[1, ])] # not a child
     stopifnot(length(candidates) > 0)
@@ -372,10 +371,17 @@ decompose_embedded <- function(x, schema, embeds) {
       relations = names(db)[startsWith(names(db), paste0(embeds$N[[n]], "::"))]
     )
   }
-  db
+  list(main = db, interrefs = schema$interrefs)
 }
 
 gv_embed <- function(x, embeds) {
+  new_refs <- lapply(
+    x$interrefs,
+    \(iref) lapply(iref$children, \(ch) c(ch, iref$parent))
+  ) |>
+    unlist(recursive = FALSE)
+  x <- x$main
+  references(x) <- c(references(x), new_refs)
   main_gv <- strsplit(gv(x), "\n")[[1]]
   dbs <- split(
     x,
