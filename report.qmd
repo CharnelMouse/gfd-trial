@@ -12,7 +12,7 @@ format:
 library(targets)
 read_dot <- function(dot) {
   cat(
-    "```{dot}\n//| fig-width: 100%\n",
+    "```{dot}\n",
     dot,
     "\n```\n",
     sep = ""

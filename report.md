@@ -5,7 +5,7 @@ Mark Webster
 library(targets)
 read_dot <- function(dot) {
   cat(
-    "```{dot}\n//| fig-width: 100%\n",
+    "```{dot}\n",
     dot,
     "\n```\n",
     sep = ""
@@ -111,7 +111,7 @@ read_dot(tar_read(gv1))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-1.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -155,7 +155,7 @@ read_dot(tar_read(gv2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-20.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -185,7 +185,7 @@ read_dot(tar_read(gv_ideal2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-19.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -461,7 +461,7 @@ read_dot(tar_read(dot_all_embeddings.ex2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-18.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -487,7 +487,7 @@ read_dot(tar_read(dot_searched_embeddings.ex2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-17.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -511,7 +511,7 @@ read_dot(tar_read(dot_searched_embeddings.ex3))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-16.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -658,7 +658,7 @@ read_dot(tar_read(gv_nullfree_schema.ex2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-15.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -679,7 +679,7 @@ read_dot(tar_read(gv_nullfree_db.ex2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-14.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -736,7 +736,7 @@ read_dot(tar_read(dot_searched_embeddings.ex5))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-13.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -785,7 +785,7 @@ read_dot(tar_read(gv_nullfree_db.ex5))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-12.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -813,7 +813,7 @@ read_dot(tar_read(nullfreetrim_dbgv5))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-11.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -868,7 +868,7 @@ read_dot(tar_read(dot_searched_embeddings.ex6))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-10.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -935,7 +935,7 @@ read_dot(tar_read(gv_nullfree_db.ex6))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-9.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1052,7 +1052,7 @@ read_dot(tar_read(dot_searched_embeddings.ex4))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-8.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1123,7 +1123,7 @@ read_dot(tar_read(gv_nullfree_db.ex4))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-7.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1156,7 +1156,7 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex2))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-6.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1178,7 +1178,7 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex5))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-5.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1200,7 +1200,7 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex6))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-4.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1227,7 +1227,7 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex4))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-3.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
@@ -1252,7 +1252,7 @@ read_dot(paste(readLines(tar_read(goal4)), collapse = "\n"))
 <div>
 
 <img src="report_files\figure-commonmark\dot-figure-2.png"
-style="height:5in" />
+style="width:7in;height:5in" />
 
 </div>
 
