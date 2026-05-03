@@ -385,7 +385,7 @@ decompose_embedded <- function(x, schema, embeds) {
   list(main = db, interrefs = schema$interrefs)
 }
 
-gv_embed <- function(x, embeds) {
+gv_embed <- function(x) {
   stopifnot(all(is.element(
     vapply(x$interrefs, \(y) length(y$children), integer(1)),
     1:2

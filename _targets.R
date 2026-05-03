@@ -192,7 +192,7 @@ list(
     ),
     tar_target(
       gv_nullfree_schema,
-      gv_embed(nullfree_schema, searched_embeddings)
+      gv_embed(nullfree_schema)
     ),
     tar_target(
       nullfree_db,
@@ -200,7 +200,7 @@ list(
     ),
     tar_target(
       gv_nullfree_db,
-      gv_embed(nullfree_db, searched_embeddings)
+      gv_embed(nullfree_db)
     ),
 
     # pruned version with key-only embeddings removed
@@ -236,7 +236,7 @@ list(
     ),
     tar_target(
       gv_pruned_nullfree_db,
-      gv_embed(pruned_nullfree_db, pruned_embeddings)
+      gv_embed(pruned_nullfree_db)
     )
   ),
 
@@ -264,7 +264,7 @@ list(
   ),
   tar_target(
     nullfreetrim_dbgv5,
-    gv_embed(nullfreetrim_db5, searched_embeddings.ex5)
+    gv_embed(nullfreetrim_db5)
   ),
 
   tar_target(
