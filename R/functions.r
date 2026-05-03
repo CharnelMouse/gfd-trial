@@ -17,6 +17,7 @@ group_fds <- function(x) {
 }
 
 find_rules <- function(x) {
+  x[] <- lapply(x, factor, c(FALSE, TRUE))
   DATAFRAME(apriori(
     transactions(x),
     parameter = list(
@@ -27,17 +28,48 @@ find_rules <- function(x) {
 }
 
 fds_from_rules <- function(x, attrs_order) {
-  lhs <- as.character(x$LHS)
-  rhs <- as.character(x$RHS)
+  lhs <- extract_rule_pairs(x$LHS)
+  rhs <- extract_rule_pairs(x$RHS)
+  lhs_logs <- mapply(to_attr_logs, lhs[[1]], lhs[[2]])
+  rhs_logs <- mapply(to_attr_logs, rhs[[1]], rhs[[2]])
   functional_dependency(
     Map(
       list,
-      substr(lhs, 2, nchar(lhs) - 1) |>
-        strsplit(","), # remove braces
-      substr(rhs, 2, nchar(rhs) - 1) # remove braces
+      lhs_logs,
+      rhs_logs
     ),
-    attrs_order
+    c(attrs_order, paste0("¬", attrs_order))
   )
+}
+
+extract_rule_pairs <- function(x) {
+  pairlists <- gsub("[{}]", "", as.character(x)) |>
+    strsplit(",") |>
+    lapply(\(x) {
+      do.call(
+        Map,
+        c(
+          list(c),
+          strsplit(x, "=")
+        )
+      ) |>
+        (\(y) {
+          if (length(y) == 0) {
+            list(character(), logical())
+          }else{ list(y[[1]], as.logical(y[[2]]))
+          }
+        })()
+    })
+  list(
+    lapply(pairlists, `[[`, 1),
+    lapply(pairlists, `[[`, 2)
+  )
+}
+
+to_attr_logs <- function(ch, lg) {
+  if (length(ch) == 0)
+    return(character())
+  ifelse(lg, ch, paste0("¬", ch))
 }
 
 minimise_rulefds <- function(x) {

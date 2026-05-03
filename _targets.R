@@ -61,25 +61,6 @@ list(
   ),
 
   tar_target(
-    rules2,
-    find_rules(presence.ex2),
-    packages = "arules"
-  ),
-  tar_target(
-    rulefds2,
-    fds_from_rules(rules2, names(presence.ex2))
-  ),
-  tar_target(
-    minrulefds2,
-    minimise_rulefds(rulefds2)
-  ),
-
-  tar_target(
-    minrulefds3,
-    find_rules(presence.ex3),
-    packages = "arules"
-  ),
-  tar_target(
     minntdrulefds3,
     remove_extraneous(minimal_presence_rule_fds.ex3)
   ),
@@ -161,23 +142,13 @@ list(
       to_presence(short)
     ),
     tar_target(
-      double_presence,
-      cbind(
-        presence,
-        setNames(
-          as.data.frame(!presence, check.names = FALSE),
-          paste0("¬", names(presence))
-        )
-      )
-    ),
-    tar_target(
       presence_rules,
-      find_rules(double_presence),
+      find_rules(presence),
       packages = "arules"
     ),
     tar_target(
       presence_rule_fds,
-      fds_from_rules(presence_rules, names(double_presence))
+      fds_from_rules(presence_rules, names(presence))
     ),
     tar_target(
       minimal_presence_rule_fds,
@@ -286,10 +257,6 @@ list(
     nullfreetrim_schema5,
     add_partitions(prekey_schema.ex5, pfdstrim5, searched_embeddings.ex5) |>
       collapse_schemas()
-  ),
-  tar_target(
-    nullfreetrim_gv5,
-    gv(nullfreetrim_schema5)
   ),
   tar_target(
     nullfreetrim_db5,

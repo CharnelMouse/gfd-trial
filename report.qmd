@@ -127,7 +127,7 @@ Association rule searches usually filter discovered rules to satisfy a minimum s
 Running the apriori algorithm on the presence patterns for the interval example gives the following rules:
 
 ```{r}
-tar_read(rules2)
+tar_read(presence_rules.ex2)
 ```
 
 We can convert these into functional dependency form, and remove any that are made redundant by the others using the following:
@@ -145,7 +145,7 @@ rulefds2[apply(
 ```
 
 ```{r}
-tar_read(minrulefds2)
+tar_read(minimal_presence_rule_fds.ex2)
 ```
 
 Of course, this just says what we already knew: `id` and `start` are never missing.
@@ -163,18 +163,6 @@ This respects the following rules:
 - `¬a => d` and its equivalent form, `¬d => a`
 
 Here are the non-dominated rules found:
-
-```{r}
-tar_read(minrulefds3)
-```
-
-Not everything is found, because only the positive cases are used. We can fix this by doubling up on every variable, producing both presence and absence columns:
-
-```{r}
-tar_read(double_presence.ex3)
-```
-
-The results are more like what we'd expect:
 
 ```{r}
 tar_read(minimal_presence_rule_fds.ex3)

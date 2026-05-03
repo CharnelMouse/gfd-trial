@@ -315,18 +315,35 @@ Running the apriori algorithm on the presence patterns for the interval
 example gives the following rules:
 
 ``` r
-tar_read(rules2)
+tar_read(presence_rules.ex2)
 ```
 
-              LHS     RHS   support confidence  coverage lift count
-    1          {} {start} 1.0000000          1 1.0000000    1     7
-    2          {}    {id} 1.0000000          1 1.0000000    1     7
-    3       {end} {start} 0.5714286          1 0.5714286    1     4
-    4       {end}    {id} 0.5714286          1 0.5714286    1     4
-    5     {start}    {id} 1.0000000          1 1.0000000    1     7
-    6        {id} {start} 1.0000000          1 1.0000000    1     7
-    7 {start,end}    {id} 0.5714286          1 0.5714286    1     4
-    8    {id,end} {start} 0.5714286          1 0.5714286    1     4
+                          LHS          RHS   support confidence  coverage lift
+    1                      {} {start=TRUE} 1.0000000          1 1.0000000    1
+    2                      {}    {id=TRUE} 1.0000000          1 1.0000000    1
+    3             {end=FALSE} {start=TRUE} 0.4285714          1 0.4285714    1
+    4             {end=FALSE}    {id=TRUE} 0.4285714          1 0.4285714    1
+    5              {end=TRUE} {start=TRUE} 0.5714286          1 0.5714286    1
+    6              {end=TRUE}    {id=TRUE} 0.5714286          1 0.5714286    1
+    7            {start=TRUE}    {id=TRUE} 1.0000000          1 1.0000000    1
+    8               {id=TRUE} {start=TRUE} 1.0000000          1 1.0000000    1
+    9  {start=TRUE,end=FALSE}    {id=TRUE} 0.4285714          1 0.4285714    1
+    10    {id=TRUE,end=FALSE} {start=TRUE} 0.4285714          1 0.4285714    1
+    11  {start=TRUE,end=TRUE}    {id=TRUE} 0.5714286          1 0.5714286    1
+    12     {id=TRUE,end=TRUE} {start=TRUE} 0.5714286          1 0.5714286    1
+       count
+    1      7
+    2      7
+    3      3
+    4      3
+    5      4
+    6      4
+    7      7
+    8      7
+    9      3
+    10     3
+    11     4
+    12     4
 
 We can convert these into functional dependency form, and remove any
 that are made redundant by the others using the following:
@@ -344,11 +361,11 @@ rulefds2[apply(
 ```
 
 ``` r
-tar_read(minrulefds2)
+tar_read(minimal_presence_rule_fds.ex2)
 ```
 
     2 functional dependencies
-    3 attributes: id, start, end
+    6 attributes: id, start, end, ¬id, ¬start, ¬end
      -> start
      -> id
 
@@ -377,34 +394,6 @@ This respects the following rules:
 - `¬a => d` and its equivalent form, `¬d => a`
 
 Here are the non-dominated rules found:
-
-``` r
-tar_read(minrulefds3)
-```
-
-        LHS RHS   support confidence  coverage lift count
-    1   {a} {b} 0.3333333          1 0.3333333  1.5     2
-    2   {c} {d} 0.3333333          1 0.3333333  1.2     2
-    3 {a,d} {b} 0.1666667          1 0.1666667  1.5     1
-    4 {b,c} {d} 0.1666667          1 0.1666667  1.2     1
-
-Not everything is found, because only the positive cases are used. We
-can fix this by doubling up on every variable, producing both presence
-and absence columns:
-
-``` r
-tar_read(double_presence.ex3)
-```
-
-           a     b     c     d    ¬a    ¬b    ¬c    ¬d
-    4   TRUE  TRUE FALSE FALSE FALSE FALSE  TRUE  TRUE
-    9  FALSE FALSE FALSE  TRUE  TRUE  TRUE  TRUE FALSE
-    11 FALSE  TRUE FALSE  TRUE  TRUE FALSE  TRUE FALSE
-    12  TRUE  TRUE FALSE  TRUE FALSE FALSE  TRUE FALSE
-    13 FALSE FALSE  TRUE  TRUE  TRUE  TRUE FALSE FALSE
-    15 FALSE  TRUE  TRUE  TRUE  TRUE FALSE FALSE FALSE
-
-The results are more like what we’d expect:
 
 ``` r
 tar_read(minimal_presence_rule_fds.ex3)
@@ -863,8 +852,8 @@ tar_read(minimal_presence_rule_fds.ex6)
        -> a
      b -> ¬c
     ¬c -> b
-     c -> ¬b
     ¬b -> c
+     c -> ¬b
 
 Remaining embeddings:
 
@@ -1028,27 +1017,27 @@ tar_read(minimal_presence_rule_fds.ex4)
      ¬d -> ¬p1
      ¬d -> ¬p2
      p2 -> p1
+     p2 -> ¬v
      p2 -> l
      p2 -> u
      p2 -> d
-     p2 -> ¬v
     ¬p1 -> ¬p2
+     p1 -> ¬v
      p1 -> l
      p1 -> u
      p1 -> d
-     p1 -> ¬v
+     ¬v -> l
+      l -> ¬v
+     ¬v -> u
+      u -> ¬v
+     ¬v -> d
+      d -> ¬v
       l -> u
       u -> l
       l -> d
       d -> l
-      l -> ¬v
-     ¬v -> l
       u -> d
       d -> u
-      u -> ¬v
-     ¬v -> u
-      d -> ¬v
-     ¬v -> d
 
 Remaining embeddings:
 
