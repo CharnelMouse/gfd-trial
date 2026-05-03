@@ -5,7 +5,7 @@ Mark Webster
 library(targets)
 read_dot <- function(dot) {
   cat(
-    "```{dot}\n",
+    "```{dot}\n//| fig-width: 7\n//| fig-height: 5\n",
     dot,
     "\n```\n",
     sep = ""
