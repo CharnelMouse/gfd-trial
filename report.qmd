@@ -219,7 +219,7 @@ Here are the results for the interval data:
 tar_read(presence_fds.ex2)
 ```
 
-We see exactly the one presence dependency we expect.
+We see exactly the one presence dependency we expect. The "d" in a circle represents the distributed key for the child tables.
 
 ### GEFDs
 

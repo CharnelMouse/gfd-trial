@@ -400,17 +400,55 @@ gv_embed <- function(x, embeds) {
     x$interrefs,
     \(iref) length(iref$children) == 2,
     logical(1)
-  )] |>
-    lapply(
-      \(iref) lapply(iref$children, \(ch) c(ch, iref$parent))
-    ) |>
-    unlist(recursive = FALSE)
+  )]
 
   x <- x$main
   references(x) <- c(references(x), new_fks)
-  references(x) <- c(references(x), new_fdks)
+
+  dfk_strings <- paste0(
+    "  ",
+    Reduce(
+      c,
+      lapply(
+        seq_along(new_fdks),
+        \(n) {
+          iref <- new_fdks[[n]]
+          c(
+            vapply(
+              iref$children,
+              \(ch) paste0(
+                "  ",
+                autodb:::to_node_name(ch[[1]]),
+                ":FROM_",
+                toString(autodb:::to_attr_name(ch[[2]])),
+                " -> D",
+                n,
+                " [style = dashed, dir = none];"
+              ),
+              character(1)
+            ),
+            paste0(
+              "  D",
+              n,
+              " -> ",
+              autodb:::to_node_name(iref$parent[[1]]),
+              ":TO_",
+              toString(autodb:::to_attr_name(iref$parent[[2]])),
+              " [style = dashed, dir = back];"
+            )
+          )
+        }
+      ),
+      character()
+    )
+  )
 
   main_gv <- strsplit(gv(x), "\n")[[1]]
+  main_gv <- append(
+    main_gv,
+    dfk_strings,
+    after = length(main_gv) - 1
+  )
   dbs <- split(
     x,
     strsplit(names(x), "::") |> vapply(`[[`, character(1), 1)
@@ -435,6 +473,7 @@ gv_embed <- function(x, embeds) {
     c(
       rem_gv[1],
       "  rankdir = \"LR\"",
+      paste0("  D", seq_along(new_fdks), " [label = d, shape = circle];", recycle0 = TRUE),
       paste0("  ", gv_clusters),
       rem_gv[-1],
       "}"
