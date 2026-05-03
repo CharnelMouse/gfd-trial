@@ -2,7 +2,6 @@
 title: "Null-free schema generation experiment"
 author: Mark Webster
 format:
-  gfm: default
   html:
     self-contained-math: true
     embed-resources: true
@@ -12,7 +11,7 @@ format:
 library(targets)
 read_dot <- function(dot) {
   cat(
-    "```{dot}\n//| fig-width: 7\n//| fig-height: 5\n",
+    "```{dot}\n//| fig-width: 100%\n",
     dot,
     "\n```\n",
     sep = ""
