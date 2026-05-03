@@ -219,7 +219,7 @@ Here are the results for the interval data:
 tar_read(presence_fds.ex2)
 ```
 
-We see exactly the one presence dependency we expect. The "d" in a circle represents the distributed key for the child tables.
+We see exactly the one presence dependency we expect.
 
 ### GEFDs
 
@@ -261,13 +261,11 @@ For each connected pair of embeddings, we know which attribute is associated wit
 read_dot(tar_read(gv_nullfree_schema.ex2))
 ```
 
-Looking good! All that remains is to insert the data:
+Looking good! The "d" in a circle represents the distributed key for the child tables. All that remains is to insert the data:
 
 ```{r, results='asis'}
 read_dot(tar_read(gv_nullfree_db.ex2))
 ```
-
-The foreign keys here should really be plotted to show they're a distributed foreign key, but this is fine for now.
 
 ## Test
 
@@ -421,7 +419,7 @@ Pruning the example with an empty main embedding shows an issue in our plots:
 read_dot(tar_read(gv_pruned_nullfree_db.ex6))
 ```
 
-The remaining relations aren't joined together at all! Removing the main embedding still leaves us with a distributed key between the two sub-embeddings, that makes them disjoint, but we're not currently showing those.
+The remaining relations aren't joined together at all! Removing the main embedding still leaves us with a distributed key between the two sub-embeddings, that makes them disjoint, but we're not currently showing those if they don't have a foreign key referring to them.
 
 The distribution data has a similar problem for the distributed key between embeddings `[iv, ¬ludp1p2]` and `[ilud, ¬v]`:
 
@@ -429,7 +427,7 @@ The distribution data has a similar problem for the distributed key between embe
 read_dot(tar_read(gv_pruned_nullfree_db.ex4))
 ```
 
-We also need to decide how to remove the transitive foreign keys that emerge from removing empty embeddings, as shown above. This can wait until we're showing the distributed keys, I think.
+We also need to decide how to remove the transitive foreign keys that emerge from removing empty embeddings, as shown above.
 
 Here's where I'd like to get to:
 
