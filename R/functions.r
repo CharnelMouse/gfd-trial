@@ -395,7 +395,7 @@ gv_embed <- function(x) {
   )))
   new_fks <- x$interrefs[vapply(
     x$interrefs,
-    \(iref) length(iref$children) == 1,
+    \(iref) length(iref$children) == 1 && !is.null(iref$parent),
     logical(1)
   )] |>
     lapply(\(iref) c(iref$children[[1]], iref$parent))
@@ -420,7 +420,6 @@ gv_embed <- function(x) {
             vapply(
               iref$children,
               \(ch) paste0(
-                "  ",
                 autodb:::to_node_name(ch[[1]]),
                 ":FROM_",
                 toString(autodb:::to_attr_name(ch[[2]])),
@@ -430,15 +429,17 @@ gv_embed <- function(x) {
               ),
               character(1)
             ),
-            paste0(
-              "  D",
-              n,
-              " -> ",
-              autodb:::to_node_name(iref$parent[[1]]),
-              ":TO_",
-              toString(autodb:::to_attr_name(iref$parent[[2]])),
-              " [style = dashed, dir = back];"
-            )
+            if (!is.null(iref$parent)) {
+              paste0(
+                "  D",
+                n,
+                " -> ",
+                autodb:::to_node_name(iref$parent[[1]]),
+                ":TO_",
+                toString(autodb:::to_attr_name(iref$parent[[2]])),
+                " [style = dashed, dir = back];"
+              )
+            }
           )
         }
       ),
@@ -483,4 +484,82 @@ gv_embed <- function(x) {
     ),
     collapse = "\n"
   )
+}
+
+prune_nullfree_schema <- function(x) {
+  embeddings <- sub("(\\[.*\\])::.*", "\\1", names(x$main), perl = TRUE)
+  unique_embeddings <- unique(embeddings)
+  match_embeddings <- match(embeddings, unique(embeddings))
+  nontrivial <- which(vapply(
+    seq_along(unique_embeddings),
+    \(n) {
+      schemas <- x$main[match_embeddings == n]
+      any(lengths(attrs(schemas)) != lengths(keys(schemas)))
+    },
+    logical(1)
+  ))
+  nontrivial_embeddings <- unique_embeddings[nontrivial]
+  # skip proper merging for now
+  pruned_interrefs <- lapply(
+    x$interrefs,
+    \(iref) list(
+      parent = if (!within_embeddings(iref$parent, nontrivial_embeddings)) {
+        NULL
+      }else{
+        iref$parent
+      },
+      children = iref$children[vapply(
+        iref$children,
+        within_embeddings,
+        logical(1),
+        nontrivial_embeddings
+      )]
+    )
+  )
+
+  pruned_interrefs <- pruned_interrefs[vapply(
+    pruned_interrefs,
+    \(iref) length(iref$children) > 0,
+    logical(1)
+  )]
+
+  main <- x$main[match_embeddings %in% nontrivial]
+  # remove extraneous FDs (incl. one-child DFKs)
+  singleton_interrefs <- vapply(
+    pruned_interrefs,
+    \(iref) !is.null(iref$parent) && length(iref$children) == 1,
+    logical(1)
+  )
+  curr_refs <- c(
+    references(main),
+    pruned_interrefs[singleton_interrefs] |>
+      lapply(\(iref) c(iref$children[[1]], iref$parent))
+  )
+  curr_refs <- autodb:::remove_extraneous_references(
+    child_ref_attrs = vapply(curr_refs, \(ref) match(ref[[1]], names(main)), integer(1)),
+    parent_ref_attrs = vapply(curr_refs, \(ref) match(ref[[3]], names(main)), integer(1)),
+    ref_attrs = lapply(curr_refs, `[[`, 4),
+    schema = main
+  )
+  curr_refs <- Map(
+    function(child, parent, attr) list(
+      child,
+      attr,
+      parent,
+      attr
+    ),
+    curr_refs$child,
+    curr_refs$parent,
+    curr_refs$attr
+  )
+  references(main) <- curr_refs
+
+  list(
+    main = main,
+    interrefs = pruned_interrefs[!singleton_interrefs]
+  )
+}
+
+within_embeddings <- function(x, embeddings) {
+  sub("(\\[.*\\])::.*", "\\1", x[[1]], perl = TRUE) %in% embeddings
 }

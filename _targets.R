@@ -237,6 +237,18 @@ list(
     tar_target(
       gv_pruned_nullfree_db,
       gv_embed(pruned_nullfree_db)
+    ),
+    tar_target(
+      pruned_nullfree_schema2,
+      prune_nullfree_schema(nullfree_schema)
+    ),
+    tar_target(
+      pruned_nullfree_db2,
+      decompose_embedded(short, pruned_nullfree_schema2, pruned_embeddings)
+    ),
+    tar_target(
+      gv_pruned_nullfree_db2,
+      gv_embed(pruned_nullfree_db2)
     )
   ),
 
