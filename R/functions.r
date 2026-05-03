@@ -201,15 +201,23 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
   # fill with ancestors to ensure correct partition joins
   for (n in seq_along(embeds$N)) {
     nm <- embeds$N[[n]]
+    els <- embeds$V[n, ]
     parents <- parents(embeds, n)
-    full_pfds[[n]] <- unique(Reduce(c, full_pfds[parents], full_pfds[[n]]))
+    full_pfds[[n]] <- unique(Reduce(
+      c,
+      lapply(
+        full_pfds[parents],
+        \(fds) fds[!is.element(dependant(fds), names(els)[!is.na(els)])]
+      ),
+      full_pfds[[n]]
+    ))
     while (length(parents) > 0) {
       parents <- parents(embeds, parents)
       full_pfds[[n]] <- unique(Reduce(
         c,
         lapply(
           full_pfds[parents],
-          \(fds) fds[!is.element(dependant(fds), names(!is.na(embeds$V[n, ])))]
+          \(fds) fds[!is.element(dependant(fds), names(els)[!is.na(els)])]
         ),
         full_pfds[[n]]
       ))
@@ -233,6 +241,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
     parts$embed,
     parts$dep
   )
+  stopifnot(all(lengths(parts$children) > 0))
 
   # make new key table if needed, create new partition reference either way
   new_refs <- list()
