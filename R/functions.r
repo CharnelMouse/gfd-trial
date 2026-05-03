@@ -241,6 +241,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
     parts$embed,
     parts$dep
   )
+  parts <- df_unique(parts[c("embed", "key", "children")])
   stopifnot(all(lengths(parts$children) > 0))
 
   # make new key table if needed, create new partition reference either way
@@ -319,6 +320,8 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
       )
     }
   }
+  if (anyDuplicated(new_refs))
+    stop(print(parts), print(new_refs[seq_len(anyDuplicated(new_refs))]))
 
   augmented_schemas <- lapply(
     embed_schemas,
