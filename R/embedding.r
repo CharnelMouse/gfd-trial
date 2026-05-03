@@ -70,21 +70,27 @@ prune_embedding <- function(x, rules, ...) {
   attrs <- colnames(x$V)
   for (n in seq_along(x$N)) {
     bools <- x$V[n, ]
-    new_bools <- bools
-    for (r in seq_along(rules)) {
-      detpres <- detset_mat[r, ]
-      deppres <- depset_mat[r, ]
-      satisfies_det <- all(is.na(detpres) | (!is.na(new_bools) & detpres == new_bools))
-      coheres_with_dep <- all(is.na(deppres) | is.na(new_bools) | deppres == new_bools)
-      if (satisfies_det) {
-        if (!coheres_with_dep) {
-          # remove
-          new_bools <- NULL
-          break
+    new_bools <- fixed_point(
+      bools,
+      step = function(x) {
+        for (r in seq_along(rules)) {
+          detpres <- detset_mat[r, ]
+          deppres <- depset_mat[r, ]
+          satisfies_det <- all(is.na(detpres) | (!is.na(x) & detpres == x))
+          coheres_with_dep <- all(is.na(deppres) | is.na(x) | deppres == x)
+          if (satisfies_det) {
+            if (!coheres_with_dep) {
+              return(NULL)
+            }
+            x <- ifelse(is.na(deppres), x, deppres)
+          }
         }
-        new_bools <- ifelse(is.na(deppres), new_bools, deppres)
+        x
+      },
+      endif = function(old, current) {
+        is.null(current) || identical(current, old)
       }
-    }
+    )
     if (is.null(new_bools)) {
       rem[[n]] <- TRUE
       next
@@ -122,6 +128,16 @@ prune_embedding <- function(x, rules, ...) {
   x$V <- x$V[keep, , drop = FALSE]
   x$N <- x$N[keep]
   x
+}
+
+fixed_point <- function(init, step, endif) {
+  old <- init
+  current <- step(init)
+  while (!endif(old, current)) {
+    old <- current
+    current <- step(current)
+  }
+  current
 }
 
 `[.embedding` <- function(x, i) {
