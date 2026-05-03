@@ -295,18 +295,20 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
         child_rels <- c(child_rels, new_relname)
       }
     }
-    new_refs <- c(
-      new_refs,
-      list(
+    if (length(child_rels) > 0) {
+      new_refs <- c(
+        new_refs,
         list(
-          parent = list(parent_rel, key),
-          children = lapply(
-            child_rels,
-            \(ch) list(ch, key)
+          list(
+            parent = list(parent_rel, key),
+            children = lapply(
+              child_rels,
+              \(ch) list(ch, key)
+            )
           )
         )
       )
-    )
+    }
   }
 
   augmented_schemas <- lapply(
