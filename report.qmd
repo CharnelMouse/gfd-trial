@@ -405,39 +405,29 @@ Here's the trimmed version of the interval example:
 
 ```{r, results='asis'}
 read_dot(tar_read(gv_pruned_nullfree_db.ex2))
-read_dot(tar_read(gv_pruned_nullfree_db2.ex2))
 ```
 
 For the simple example where the presence-determining attribute isn't the value determining attribute:
 
 ```{r, results='asis'}
 read_dot(tar_read(gv_pruned_nullfree_db.ex5))
-read_dot(tar_read(gv_pruned_nullfree_db2.ex5))
 ```
 
-Pruning the example with an empty main embedding shows an issue in our plots:
+Pruning the example with an empty main embedding shows an important feature:
 
 ```{r, results='asis'}
 read_dot(tar_read(gv_pruned_nullfree_db.ex6))
-read_dot(tar_read(gv_pruned_nullfree_db2.ex6))
 ```
 
-The remaining relations aren't joined together at all! Removing the main embedding still leaves us with a distributed key between the two sub-embeddings, that makes them disjoint, but we're not currently showing those if they don't have a foreign key referring to them.
+Removing the main embedding for a foreign distributed key still leaves us with a distributed key between the two sub-embeddings, that makes them disjoint, and we still show them in the plots.
 
 The distribution data has a similar problem for the distributed key between embeddings `[iv, ¬ludp1p2]` and `[ilud, ¬v]`:
 
 ```{r, results='asis'}
 read_dot(tar_read(gv_pruned_nullfree_db.ex4))
-read_dot(tar_read(gv_pruned_nullfree_db2.ex4))
 ```
 
 We also need to decide how to remove the transitive foreign keys that emerge from removing empty embeddings, as shown above.
-
-Here's where I'd like to get to:
-
-```{r, results='asis'}
-read_dot(paste(readLines(tar_read(goal4)), collapse = "\n"))
-```
 
 ## Session info
 

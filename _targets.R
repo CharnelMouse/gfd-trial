@@ -204,31 +204,9 @@ list(
     ),
 
     # pruned version with key-only embeddings removed
-
-    tar_target(
-      pruned_embeddings,
-      searched_embeddings[lengths(gefds) > 0]
-    ),
-    tar_target(
-      pruned_presence_fds,
-      presence_fds[names(presence_fds) %in% pruned_embeddings$N]
-    ),
-    tar_target(
-      pruned_gefds,
-      gefds[names(gefds) %in% pruned_embeddings$N]
-    ),
-    tar_target(
-      pruned_prekey_schema,
-      prekey_schemas(pruned_gefds, remove_avoidable = TRUE)
-    ),
     tar_target(
       pruned_nullfree_schema,
-      add_partitions(
-        pruned_prekey_schema,
-        pruned_presence_fds,
-        pruned_embeddings
-      ) |>
-        collapse_schemas()
+      prune_nullfree_schema(nullfree_schema)
     ),
     tar_target(
       pruned_nullfree_db,
@@ -237,18 +215,6 @@ list(
     tar_target(
       gv_pruned_nullfree_db,
       gv_embed(pruned_nullfree_db)
-    ),
-    tar_target(
-      pruned_nullfree_schema2,
-      prune_nullfree_schema(nullfree_schema)
-    ),
-    tar_target(
-      pruned_nullfree_db2,
-      decompose_embedded(short, pruned_nullfree_schema2)
-    ),
-    tar_target(
-      gv_pruned_nullfree_db2,
-      gv_embed(pruned_nullfree_db2)
     )
   ),
 
@@ -277,12 +243,6 @@ list(
   tar_target(
     nullfreetrim_dbgv5,
     gv_embed(nullfreetrim_db5)
-  ),
-
-  tar_target(
-    goal4,
-    "goal4.dot",
-    format = "file"
   ),
 
   tar_quarto(
