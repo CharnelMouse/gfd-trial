@@ -196,7 +196,7 @@ list(
     ),
     tar_target(
       nullfree_db,
-      decompose_embedded(short, nullfree_schema, searched_embeddings)
+      decompose_embedded(short, nullfree_schema)
     ),
     tar_target(
       gv_nullfree_db,
@@ -232,7 +232,7 @@ list(
     ),
     tar_target(
       pruned_nullfree_db,
-      decompose_embedded(short, pruned_nullfree_schema, pruned_embeddings)
+      decompose_embedded(short, pruned_nullfree_schema)
     ),
     tar_target(
       gv_pruned_nullfree_db,
@@ -244,7 +244,7 @@ list(
     ),
     tar_target(
       pruned_nullfree_db2,
-      decompose_embedded(short, pruned_nullfree_schema2, pruned_embeddings)
+      decompose_embedded(short, pruned_nullfree_schema2)
     ),
     tar_target(
       gv_pruned_nullfree_db2,
@@ -272,7 +272,7 @@ list(
   ),
   tar_target(
     nullfreetrim_db5,
-    decompose_embedded(data.ex5, nullfreetrim_schema5, searched_embeddings.ex5)
+    decompose_embedded(data.ex5, nullfreetrim_schema5)
   ),
   tar_target(
     nullfreetrim_dbgv5,

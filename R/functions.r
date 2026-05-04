@@ -334,7 +334,8 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
   list(
     schemas = augmented_schemas,
     attrs_order = colnames(embeds$V),
-    interrefs = new_refs
+    interrefs = new_refs,
+    embeds = `rownames<-`(embeds$V, embeds$N)
   )
 }
 
@@ -350,10 +351,10 @@ collapse_schemas <- function(x) {
       list()
     )
   )
-  list(main = res, interrefs = x$interrefs)
+  list(main = res, interrefs = x$interrefs, embeds = x$embeds)
 }
 
-decompose_embedded <- function(x, schema, embeds) {
+decompose_embedded <- function(x, schema) {
   # insert parents first
   refs <- references(schema$main)
   ref_embeds <- vapply(
@@ -361,9 +362,8 @@ decompose_embedded <- function(x, schema, embeds) {
     \(ref) vapply(strsplit(c(ref[[1]], ref[[3]]), "::"), `[[`, character(1), 1),
     character(2)
   )
-  ref_embeds[] <- match(ref_embeds, embeds$N)
   ref_embeds <- ref_embeds[, ref_embeds[1, ] != ref_embeds[2, ], drop = FALSE]
-  queue <- seq_along(embeds$N)
+  queue <- rownames(schema$embeds)
   db <- create(schema$main)
   while (length(queue) > 0) {
     candidates <- queue[!is.element(queue, ref_embeds[1, ])] # not a child
@@ -372,7 +372,7 @@ decompose_embedded <- function(x, schema, embeds) {
     queue <- queue[queue != n]
     ref_embeds <- ref_embeds[, ref_embeds[2, ] != n, drop = FALSE] # remove as parent
 
-    pattern <- embeds$V[n, ]
+    pattern <- schema$embeds[n, ]
     sample <- x[
       apply(x[which(pattern)], 1, \(x) all(!is.na(x))) &
         apply(x[which(!pattern)], 1, \(x) all(is.na(x))),
@@ -382,7 +382,7 @@ decompose_embedded <- function(x, schema, embeds) {
     db <- insert(
       db,
       sample,
-      relations = names(db)[startsWith(names(db), paste0(embeds$N[[n]], "::"))]
+      relations = names(db)[startsWith(names(db), paste0(n, "::"))]
     )
   }
   list(main = db, interrefs = schema$interrefs)
@@ -556,7 +556,8 @@ prune_nullfree_schema <- function(x) {
 
   list(
     main = main,
-    interrefs = pruned_interrefs[!singleton_interrefs]
+    interrefs = pruned_interrefs[!singleton_interrefs],
+    embeds = x$embeds[rownames(x$embeds) %in% nontrivial_embeddings, , drop = FALSE]
   )
 }
 
