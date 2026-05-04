@@ -429,6 +429,17 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex4))
 
 We also need to decide how to remove the transitive foreign keys that emerge from removing empty embeddings, as shown above.
 
+## ChickWeight
+
+As another example, here's a version of the ChickWeight data where I've added rows for the Chick-Time pairs with no measurement.
+
+```{r, results='asis'}
+read_dot(tar_read(gv_nullfree_db.ex7))
+read_dot(tar_read(gv_pruned_nullfree_db.ex7))
+```
+
+This is correct, but has the same problem that I have for compound foreign keys: it would be unclear which attribute maps to which in cases where relations have different names for the same attribute.
+
 ## Session info
 
 ```{r}

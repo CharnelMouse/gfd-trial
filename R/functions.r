@@ -417,18 +417,19 @@ gv_embed <- function(x) {
         \(n) {
           iref <- new_fdks[[n]]
           c(
-            vapply(
+            lapply(
               iref$children,
               \(ch) paste0(
                 autodb:::to_node_name(ch[[1]]),
                 ":FROM_",
-                toString(autodb:::to_attr_name(ch[[2]])),
+                autodb:::to_attr_name(ch[[2]]),
                 " -> D",
                 n,
-                " [style = dashed, dir = none];"
-              ),
-              character(1)
-            ),
+                " [style = dashed, dir = none];",
+                recycle0 = TRUE
+              )
+            ) |>
+              Reduce(f = c, init = character()),
             if (!is.null(iref$parent)) {
               paste0(
                 "  D",
@@ -436,8 +437,9 @@ gv_embed <- function(x) {
                 " -> ",
                 autodb:::to_node_name(iref$parent[[1]]),
                 ":TO_",
-                toString(autodb:::to_attr_name(iref$parent[[2]])),
-                " [style = dashed, dir = back];"
+                autodb:::to_attr_name(iref$parent[[2]]),
+                " [style = dashed, dir = back];",
+                recycle0 = TRUE
               )
             }
           )
@@ -494,7 +496,11 @@ prune_nullfree_schema <- function(x) {
     seq_along(unique_embeddings),
     \(n) {
       schemas <- x$main[match_embeddings == n]
-      any(lengths(attrs(schemas)) != lengths(keys(schemas)))
+      any(mapply(
+        \(as, ks) any(lengths(ks) != length(as)),
+        attrs(schemas),
+        keys(schemas)
+      ))
     },
     logical(1)
   ))

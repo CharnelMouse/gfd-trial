@@ -100,17 +100,27 @@ list(
           a = 1:6,
           b = c(1, 1, 2, NA, NA, NA),
           c = c(NA, NA, NA, 1, 1, 2)
-        )
+        ),
+        ex7 = ChickWeight |>
+          (\(x) {
+            merge(
+              expand.grid(Time = unique(x$Time), Chick = unique(x$Chick)) |>
+                merge(unique(ChickWeight[c("Chick", "Diet")])),
+              x,
+              all = TRUE
+            )
+          })()
       ),
-      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE),
+      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE),
       exclude = list(
         character(),
         character(),
         c("v", "l", "u", "p1", "p2"),
         character(),
+        character(),
         character()
       ),
-      nm = c("ex2", "ex3", "ex4", "ex5", "ex6")
+      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7")
     ),
     names = "nm",
     delimiter = ".",
