@@ -29,6 +29,16 @@ This document can be generated from scratch by downloading the project, and runn
 
 To experiment with implementing some ideas on automatic null-free schema generation.
 
+## Things left to do
+
+- Properly handle merging of foreign keys when pruning schemas
+- Handle some relvar-specific cases, i.e. `{} -> P(A)`.
+
+Things that can wait for the full autodb implementation:
+
+- Enforcement of distributed keys, e.g. for further data insertion
+- Any sort of proper encapsulation / classes
+
 ## Context
 
 I've been working on an R package called autodb, which implements existing algorithms to discover functional dependencies in a given data set, and use them to normalise it (to EKNF using Bernstein synthesis).
