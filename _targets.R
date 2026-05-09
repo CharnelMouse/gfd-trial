@@ -109,18 +109,23 @@ list(
               x,
               all = TRUE
             )
-          })()
+          })(),
+        ex8 = data.frame(
+          a = c(1:3, NA, NA),
+          b = c(1:2, 2L, 1:2)
+        )
       ),
-      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE),
+      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE),
       exclude = list(
         character(),
         character(),
         c("v", "l", "u", "p1", "p2"),
         character(),
         character(),
+        character(),
         character()
       ),
-      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7")
+      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7", "ex8")
     ),
     names = "nm",
     delimiter = ".",

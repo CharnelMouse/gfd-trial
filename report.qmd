@@ -450,6 +450,46 @@ read_dot(tar_read(gv_pruned_nullfree_db.ex7))
 
 This is correct, but has the same problem that I have for compound foreign keys: it would be unclear which attribute maps to which in cases where relations have different names for the same attribute.
 
+## Key problems
+
+At the moment, we don't always have keys where we should:
+
+```{r}
+tar_read(data.ex8)
+```
+
+Minimal presence rules:
+
+```{r}
+tar_read(minimal_presence_rule_fds.ex8)
+```
+
+Remaining embeddings:
+
+```{r, results='asis'}
+read_dot(tar_read(dot_searched_embeddings.ex8))
+```
+
+Presence dependencies:
+
+```{r}
+tar_read(presence_fds.ex4)[lengths(tar_read(presence_fds.ex8)) > 0]
+```
+
+GEFDs:
+
+```{r}
+tar_read(gefds.ex4)[lengths(tar_read(gefds.ex8)) > 0]
+```
+
+```{r, results='asis'}
+read_dot(tar_read(gv_nullfree_db.ex8))
+```
+
+This is one embedding instead of three, because the no-A embedding gets no schemas, when it should get a key-only one to keep the schema lossless. (This raises another issue, that we need to not remove this embedding when we prune.)
+
+This raises an interesting question: under the current framework, there is no key, so the main embedding is empty. Would we instead want `b` as the main key, and then have the two child embeddings branch off it as a non-disjoint union? That could get messy.
+
 ## Session info
 
 ```{r}
