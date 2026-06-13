@@ -300,13 +300,14 @@ read_dot(tar_read(dot_searched_embeddings.ex5))
 Presence dependencies:
 
 ```{r}
-tar_read(presence_fds.ex5)[lengths(tar_read(presence_fds.ex5)) > 0]
+nonempty <- function(x) x[lengths(x) > 0]
+nonempty(tar_read(presence_fds.ex5))
 ```
 
 GEFDs:
 
 ```{r}
-tar_read(gefds.ex5)[lengths(tar_read(gefds.ex5)) > 0]
+nonempty(tar_read(gefds.ex5))
 ```
 
 Final database:
@@ -348,13 +349,13 @@ read_dot(tar_read(dot_searched_embeddings.ex6))
 Presence dependencies:
 
 ```{r}
-tar_read(presence_fds.ex6)[lengths(tar_read(presence_fds.ex6)) > 0]
+nonempty(tar_read(presence_fds.ex6))
 ```
 
 GEFDs:
 
 ```{r}
-tar_read(gefds.ex4)[lengths(tar_read(gefds.ex6)) > 0]
+nonempty(tar_read(gefds.ex6))
 ```
 
 Final database:
@@ -390,13 +391,13 @@ read_dot(tar_read(dot_searched_embeddings.ex4))
 Presence dependencies:
 
 ```{r}
-tar_read(presence_fds.ex4)[lengths(tar_read(presence_fds.ex4)) > 0]
+nonempty(tar_read(presence_fds.ex4))
 ```
 
 GEFDs:
 
 ```{r}
-tar_read(gefds.ex4)[lengths(tar_read(gefds.ex4)) > 0]
+nonempty(tar_read(gefds.ex4))
 ```
 
 Final database:
@@ -473,13 +474,13 @@ read_dot(tar_read(dot_searched_embeddings.ex8))
 Presence dependencies:
 
 ```{r}
-tar_read(presence_fds.ex8)[lengths(tar_read(presence_fds.ex8)) > 0]
+nonempty(tar_read(presence_fds.ex8))
 ```
 
 GEFDs:
 
 ```{r}
-tar_read(gefds.ex8)[lengths(tar_read(gefds.ex8)) > 0]
+nonempty(tar_read(gefds.ex8))
 ```
 
 ```{r, results='asis'}
