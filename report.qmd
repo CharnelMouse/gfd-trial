@@ -191,13 +191,13 @@ tar_read(grpfds3)
 
 ### Embedding pruning
 
-For future purposes, we also need to turn our presence rules into a graph of allowed embeddings. Embeddings are a set of constant-value presence conditions, which determine which subset of the data tuples we are considering. As an example, here are the possible embeddings for the interval example:
+For future purposes, we also need to turn our presence rules into a graph of allowed embeddings. Embeddings are a set of constant-value presence conditions, which determine which subset of the data tuples we are considering. As an example, here are the possible embeddings for the interval example (after accounting for attributes being always- or never- null):
 
 ```{r, results='asis'}
 read_dot(tar_read(dot_all_embeddings.ex2))
 ```
 
-Note that we're also keeping track of how we can get from one embedding to another by removing the presence for one attribute.
+Note that we also connect embeddings that differ by making a presence decision on one attribute.
 
 We can then take our discovered presence rules for the interval data -- `id` and `start` are always non-missing -- and use these to reduce to just the relevant embeddings.
 
@@ -205,7 +205,7 @@ We can then take our discovered presence rules for the interval data -- `id` and
 read_dot(tar_read(dot_searched_embeddings.ex2))
 ```
 
-As we'd expect, the main embedding is now the one with `id` and `start` present, and the children split this on whether `end` is present.
+In this case, the embeddings are the same as before: the main embedding has `id` and `start` present, and the children split on whether `end` is present.
 
 Does this work for our presence example, too?
 
@@ -473,13 +473,13 @@ read_dot(tar_read(dot_searched_embeddings.ex8))
 Presence dependencies:
 
 ```{r}
-tar_read(presence_fds.ex4)[lengths(tar_read(presence_fds.ex8)) > 0]
+tar_read(presence_fds.ex8)[lengths(tar_read(presence_fds.ex8)) > 0]
 ```
 
 GEFDs:
 
 ```{r}
-tar_read(gefds.ex4)[lengths(tar_read(gefds.ex8)) > 0]
+tar_read(gefds.ex8)[lengths(tar_read(gefds.ex8)) > 0]
 ```
 
 ```{r, results='asis'}
@@ -489,6 +489,19 @@ read_dot(tar_read(gv_nullfree_db.ex8))
 This is one embedding instead of three, because the no-A embedding gets no schemas, when it should get a key-only one to keep the schema lossless. (This raises another issue, that we need to not remove this embedding when we prune.)
 
 This raises an interesting question: under the current framework, there is no key, so the main embedding is empty. Would we instead want `b` as the main key, and then have the two child embeddings branch off it as a non-disjoint union? That could get messy.
+
+## Properties
+
+Let's start talking about properties/invariants we expect a null-free schema to follow:
+
+- All dependencies are enforced, either as a direct representation or by transitivity along foreign keys.
+- If we join an embedding's (rejoined?) schema with those of its descendants and its ancestors, we losslessly recover the original tuples that are assigned to that embedding.
+  - We need both: the ancestors can hold attribute that sibling embeddings have in common, and the descendants hold nullable attributes.
+- As a corollary, if we join an embedding's (rejoined?) schema with those of its ancestors, we losslessly recover the non-nullable attributes of the original tuples assigned to that embedding.
+  - Is that actually true? What if we've moved an attribute down into the child embeddings? I'm not convinced this is really true.
+- If we join the (rejoined?) schema of a leaf (ultimate child) with those of its ancestors, we losslessly recover the original tuples that are assigned to that embedding.
+- If we join the (rejoined?) schema of a root (ultimate parent / distributed key) with those of its descendants, we losslessly recover all of the original tuples.
+  - The mention of a distributed key brings up something important: in addition to the usual operation of joining two relations/embeddings together, we also need an operation of joining together all the relations that belong to a given distributed key. We also need some sort of operation that handles joins over foreign distributed keys: either we join to the whole distributed key by re-joining its relations first, or we join to one of the relations within that distributed key to make a partial join.
 
 ## Session info
 
