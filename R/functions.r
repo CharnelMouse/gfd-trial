@@ -334,6 +334,7 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
   list(
     schemas = augmented_schemas,
     attrs_order = colnames(embeds$V),
+    reversefks = list(),
     interrefs = new_refs,
     embeds = `rownames<-`(embeds$V, embeds$N)
   )
@@ -351,7 +352,7 @@ collapse_schemas <- function(x) {
       list()
     )
   )
-  list(main = res, interrefs = x$interrefs, embeds = x$embeds)
+  list(main = res, reversefks = x$reversefks, interrefs = x$interrefs, embeds = x$embeds)
 }
 
 decompose_embedded <- function(x, schema) {
@@ -385,7 +386,7 @@ decompose_embedded <- function(x, schema) {
       relations = names(db)[startsWith(names(db), paste0(n, "::"))]
     )
   }
-  list(main = db, interrefs = schema$interrefs)
+  list(main = db, reversefks = schema$reversefks, interrefs = schema$interrefs)
 }
 
 gv_embed <- function(x) {
@@ -399,6 +400,7 @@ gv_embed <- function(x) {
     logical(1)
   )] |>
     lapply(\(iref) c(iref$children[[1]], iref$parent))
+  new_rfks <- x$reversefks
   new_fdks <- x$interrefs[vapply(
     x$interrefs,
     \(iref) length(iref$children) == 2,
@@ -407,6 +409,30 @@ gv_embed <- function(x) {
 
   x <- x$main
   references(x) <- c(references(x), new_fks)
+
+  reversefk_strings <- paste0(
+    "  ",
+    Reduce(
+      c,
+      lapply(
+        seq_len(length(new_rfks$child)),
+        \(n) {
+          paste0(
+            autodb:::to_node_name(new_rfks$parent[[n]]),
+            ":FROM_",
+            autodb:::to_attr_name(new_rfks$attr[[n]]),
+            " -> ",
+            autodb:::to_node_name(new_rfks$child[[n]]),
+            ":TO_",
+            autodb:::to_attr_name(new_rfks$attr[[n]]),
+            " [dir = back];",
+            recycle0 = TRUE
+          )
+        }
+      ),
+      character()
+    )
+  )
 
   dfk_strings <- paste0(
     "  ",
@@ -420,11 +446,12 @@ gv_embed <- function(x) {
             lapply(
               iref$children,
               \(ch) paste0(
-                autodb:::to_node_name(ch[[1]]),
-                ":FROM_",
-                autodb:::to_attr_name(ch[[2]]),
-                " -> D",
+                "D",
                 n,
+                " -> ",
+                autodb:::to_node_name(ch[[1]]),
+                ":TO_",
+                autodb:::to_attr_name(ch[[2]]),
                 " [style = dashed, dir = none];",
                 recycle0 = TRUE
               )
@@ -432,13 +459,13 @@ gv_embed <- function(x) {
               Reduce(f = c, init = character()),
             if (!is.null(iref$parent)) {
               paste0(
-                "  D",
-                n,
-                " -> ",
                 autodb:::to_node_name(iref$parent[[1]]),
-                ":TO_",
+                ":FROM_",
                 autodb:::to_attr_name(iref$parent[[2]]),
-                " [style = dashed, dir = back];",
+                " -> ",
+                "D",
+                n,
+                " [style = dashed];",
                 recycle0 = TRUE
               )
             }
@@ -452,7 +479,7 @@ gv_embed <- function(x) {
   main_gv <- strsplit(gv(x), "\n")[[1]]
   main_gv <- append(
     main_gv,
-    dfk_strings,
+    c(reversefk_strings, dfk_strings),
     after = length(main_gv) - 1
   )
   dbs <- split(
@@ -536,11 +563,7 @@ prune_nullfree_schema <- function(x) {
     \(iref) !is.null(iref$parent) && length(iref$children) == 1,
     logical(1)
   )
-  curr_refs <- c(
-    references(main),
-    pruned_interrefs[singleton_interrefs] |>
-      lapply(\(iref) c(iref$children[[1]], iref$parent))
-  )
+  curr_refs <- references(main)
   curr_refs <- autodb:::remove_extraneous_references(
     child_ref_attrs = vapply(curr_refs, \(ref) match(ref[[1]], names(main)), integer(1)),
     parent_ref_attrs = vapply(curr_refs, \(ref) match(ref[[3]], names(main)), integer(1)),
@@ -560,8 +583,17 @@ prune_nullfree_schema <- function(x) {
   )
   references(main) <- curr_refs
 
+  reversefks <- pruned_interrefs[singleton_interrefs]
+  reversefks <- autodb:::remove_extraneous_references(
+    child_ref_attrs = vapply(reversefks, \(ref) match(ref$children[[1]][[1]], names(main)), integer(1)),
+    parent_ref_attrs = vapply(reversefks, \(ref) match(ref$parent[[1]], names(main)), integer(1)),
+    ref_attrs = lapply(reversefks, \(ref) ref$parent[[2]]),
+    schema = main
+  )
+
   list(
     main = main,
+    reversefks = reversefks,
     interrefs = pruned_interrefs[!singleton_interrefs],
     embeds = x$embeds[rownames(x$embeds) %in% nontrivial_embeddings, , drop = FALSE]
   )
