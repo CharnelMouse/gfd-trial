@@ -504,6 +504,57 @@ Let's start talking about properties/invariants we expect a null-free schema to 
 - If we join the (rejoined?) schema of a root (ultimate parent / distributed key) with those of its descendants, we losslessly recover all of the original tuples.
   - The mention of a distributed key brings up something important: in addition to the usual operation of joining two relations/embeddings together, we also need an operation of joining together all the relations that belong to a given distributed key. We also need some sort of operation that handles joins over foreign distributed keys: either we join to the whole distributed key by re-joining its relations first, or we join to one of the relations within that distributed key to make a partial join.
 
+## Real data
+
+Finally, we show results from some more realistic data sets.
+
+### `nycflights13::planes`
+
+```{r, results='asis'}
+read_dot(tar_read(gv_keyed.planes))
+read_dot(tar_read(gv_db.planes))
+read_dot(tar_read(gv_nullfree_db.planes))
+read_dot(tar_read(gv_pruned_nullfree_db.planes))
+```
+
+Excluding `year`, `engines`, `seats`, and `speed` makes the schema more manageable:
+
+```{r, results='asis'}
+read_dot(tar_read(gv_db.planes_exclude))
+read_dot(tar_read(gv_nullfree_db.planes_exclude))
+read_dot(tar_read(gv_pruned_nullfree_db.planes_exclude))
+```
+
+The structure for the pruned embedding is that `speed` is non-null only if `year` is non-null. Therefore, the first-levels are for `year` being non-null, and for `speed` being null. The second-level embeddings then determine both as having the same presence.
+
+Looking at the distributed keys, we see that `tailnum` determines the presence of both as expected, and that `model` determines the presence of `speed`, again as expected.
+
+As with the literal schema, we can see there's an issue with the model: it doesn't solely determine a lot of things that it should, such as the number of engines. This is entirely due to two models:
+
+```{r}
+subset(tar_read(data.planes), model == "A330-223")
+subset(tar_read(data.planes), model == "A319-112", -tailnum) |>
+  unique()
+```
+
+If we suffix the Airbus Industrie versions of these models with "I", then the no-exclusion schemas simplify accordingly:
+
+```{r, results='asis'}
+read_dot(tar_read(gv_db.planes_fix))
+read_dot(tar_read(gv_nullfree_db.planes_fix))
+read_dot(tar_read(gv_pruned_nullfree_db.planes_fix))
+```
+
+So does the exclusion schema:
+
+```{r, results='asis'}
+read_dot(tar_read(gv_db.planes_fix_exclude))
+read_dot(tar_read(gv_nullfree_db.planes_fix_exclude))
+read_dot(tar_read(gv_pruned_nullfree_db.planes_fix_exclude))
+```
+
+When I look at these schemas, I find that I break up my viewing of them into steps: look at which embeddings there are, then at the distributed keys, then at the relations with non-key attributes, i.e. relations not solely there for the distributed key references, that convey actual structure. Of course, this aligns with our three dependency types, so I could do with making it easy to observe these three levels separately, or accumulatively.
+
 ## Session info
 
 ```{r}

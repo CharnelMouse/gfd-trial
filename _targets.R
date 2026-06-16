@@ -113,9 +113,23 @@ list(
         ex8 = data.frame(
           a = c(1:3, NA, NA),
           b = c(1:2, 2L, 1:2)
-        )
+        ),
+        planes = nycflights13::planes,
+        planes_exclude = nycflights13::planes,
+        planes_fix = nycflights13::planes |>
+          transform(model = ifelse(
+            model %in% c("A330-223", "A319-112") & manufacturer == "AIRBUS INDUSTRIE",
+            paste0(model, "I"),
+            model
+          )),
+        planes_fix_exclude = nycflights13::planes |>
+          transform(model = ifelse(
+            model %in% c("A330-223", "A319-112") & manufacturer == "AIRBUS INDUSTRIE",
+            paste0(model, "I"),
+            model
+          ))
       ),
-      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE),
+      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
       exclude = list(
         character(),
         character(),
@@ -123,7 +137,11 @@ list(
         character(),
         character(),
         character(),
-        character()
+        character(),
+        character(),
+        c("year", "engines", "seats", "speed"),
+        character(),
+        c("year", "engines", "seats", "speed")
       ),
       exclude_class = list(
         character(),
@@ -132,9 +150,13 @@ list(
         character(),
         character(),
         character(),
+        character(),
+        character(),
+        character(),
+        character(),
         character()
       ),
-      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7", "ex8")
+      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7", "ex8", "planes", "planes_exclude", "planes_fix", "planes_fix_exclude")
     ),
     names = "nm",
     delimiter = ".",
@@ -157,6 +179,24 @@ list(
             perl = TRUE
           ))
         )
+    ),
+    tar_target(
+      gv_keyed,
+      gv(relation(
+        setNames(
+          list(list(df = data, keys = discover_keys(data))),
+          nm
+        ),
+        names(data)
+      ))
+    ),
+    tar_target(
+      db,
+      autodb(data, exclude = exclude, exclude_class = exclude_class)
+    ),
+    tar_target(
+      gv_db,
+      gv(db)
     ),
 
     # dependency search
