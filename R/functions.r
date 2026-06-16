@@ -28,22 +28,20 @@ find_rules <- function(x) {
 }
 
 fds_from_rules <- function(x, attrs_order) {
-  lhs <- extract_rule_pairs(x$LHS)
-  rhs <- extract_rule_pairs(x$RHS)
-  lhs_logs <- mapply(to_attr_logs, lhs[[1]], lhs[[2]])
-  rhs_logs <- mapply(to_attr_logs, rhs[[1]], rhs[[2]])
+  lhs <- extract_attr_logs(x$LHS)
+  rhs <- extract_attr_logs(x$RHS)
   functional_dependency(
     Map(
       list,
-      lhs_logs,
-      rhs_logs
+      lhs,
+      rhs
     ),
     c(attrs_order, paste0("¬", attrs_order))
   )
 }
 
-extract_rule_pairs <- function(x) {
-  pairlists <- gsub("[{}]", "", as.character(x)) |>
+extract_attr_logs <- function(x) {
+  uniq <- gsub("[{}]", "", levels(x)) |>
     strsplit(",") |>
     lapply(\(x) {
       do.call(
@@ -54,16 +52,13 @@ extract_rule_pairs <- function(x) {
         )
       ) |>
         (\(y) {
-          if (length(y) == 0) {
-            list(character(), logical())
-          }else{ list(y[[1]], as.logical(y[[2]]))
-          }
+          if (length(y) == 0)
+            character()
+          else
+            to_attr_logs(y[[1]], y[[2]])
         })()
     })
-  list(
-    lapply(pairlists, `[[`, 1),
-    lapply(pairlists, `[[`, 2)
-  )
+  uniq[as.integer(x)]
 }
 
 to_attr_logs <- function(ch, lg) {
@@ -72,40 +67,81 @@ to_attr_logs <- function(ch, lg) {
   ifelse(lg, ch, paste0("¬", ch))
 }
 
-minimise_rulefds <- function(x) {
-  x[apply(outer(x, x, `>`), 1, Negate(any))]
+minimise_rulefds <- function(x, progress = FALSE) {
+  # switch to ints
+  dp <- match(dependant(x), dependant(x))
+  dt <- lapply(detset(x), match, attrs_order(x))
+  spl <- split(dt, dp)
+  keep <- seq_along(spl) |>
+    lapply(\(n) {
+      y <- spl[[n]]
+      lens <- lengths(y)
+      if (progress) {
+        tb <- table(lens)
+        cat(paste0(n, "/", length(spl), ": ", paste(names(tb), tb, collapse = ", "), "\n"))
+        flush.console()
+      }
+      empty <- lens == 0
+      if (any(empty))
+        return(empty)
+      keep <- rep(TRUE, length(y))
+      for (l in head(sort(unique(lens)), -1)) {
+        curr <- y[lens == l & keep]
+        keep[lens > l & keep] <- vapply(
+          y[lens > l & keep],
+          \(sup) !any(vapply(curr, \(c, s) all(is.element(c, s)), logical(1), sup)),
+          logical(1)
+        )
+        if (progress) {
+          tb <- table(lens[keep])
+          cat(paste0("  ", l, ": ", paste(names(tb), tb, collapse = ", "), "\n"))
+          flush.console()
+        }
+      }
+      keep
+    }) |>
+    unsplit(dp)
+  x[keep]
 }
 
 embeddings <- function(x) {
   nms <- names(x)
-  vals <- lapply(setNames(nm = nms), \(x) c(NA, FALSE, TRUE))
+  # check for non/all-null to pre-prune a bit
+  vals <- lapply(
+    x,
+    \(x) {
+      nulls <- anyNA(x)
+      vals <- any(!is.na(x))
+      c(
+        if (nulls && vals) NA,
+        if (nulls) FALSE,
+        if (vals) TRUE
+      )
+    }
+  )
   embs <- as.matrix(expand.grid(vals))
   ids <- seq_len(nrow(embs))
-  edges <- outer(
+  sizes <- c(1L, head(cumprod(lengths(vals)), -1))
+  edge_groups <- lapply(
     ids,
-    ids,
-    Vectorize(\(n, m) {
-      sub <- embs[n, ]
-      sup <- embs[m, ]
-      eq <- (is.na(sub) & is.na(sup)) | sub == sup
-      sum(!eq, na.rm = TRUE) == 0 &&
-        sum(eq, na.rm = TRUE) == length(sub) - 1 &&
-        !is.na(sub[[which(is.na(eq))]]) &&
-        is.na(sup[[which(is.na(eq))]])
-    })
-  ) |>
-    which(arr.ind = TRUE) |>
-    `colnames<-`(c("child", "parent"))
-  edge_attrs <- Map(
-    \(ch, pa) {
-      sub <- embs[ch, ]
-      sup <- embs[pa, ]
-      eq <- (is.na(sub) & is.na(sup)) | sub == sup
-      names(eq)[is.na(eq) | !eq]
-    },
-    edges[, "child"],
-    edges[, "parent"]
+    \(parent) {
+      na_inds <- which(is.na(embs[parent, ]))
+      children <- parent + seq_len(2)*rep(sizes[na_inds], each = 2)
+      attrs <- rep(
+        lapply(na_inds, \(n) nms[na_inds[na_inds != n]]),
+        each = 2
+      )
+      list(
+        edges = cbind(
+          child = children,
+          parent = rep(parent, length(children))
+        ),
+        attrs = nms[rep(na_inds, each = 2)]
+      )
+    }
   )
+  edges <- do.call(rbind, lapply(edge_groups, `[[`, "edges"))
+  edge_attrs <- as.list(do.call(c, lapply(edge_groups, `[[`, "attrs")))
   enms <- apply(
     embs,
     1,
@@ -122,7 +158,7 @@ embeddings <- function(x) {
   )
 }
 
-discover_presence <- function(x, embeds) {
+discover_presence <- function(x, embeds, progress = FALSE) {
   pres <- to_presence(x)
   res <- lapply(
     setNames(
@@ -130,6 +166,10 @@ discover_presence <- function(x, embeds) {
       embeds$N
     ),
     \(n) {
+      if (progress) {
+        cat(paste0("\rsearching ", n, "/", length(embeds$N)))
+        flush.console()
+      }
       V <- embeds$V[n, ]
       Vrep <- t(replicate(nrow(x), V))
       used <- apply(is.na(Vrep) | (Vrep == pres), 1, all)
@@ -145,10 +185,14 @@ discover_presence <- function(x, embeds) {
       )
     }
   )
-  remove_ancestor_fds(res, embeds)
+  if (progress) {
+    cat("\n")
+    flush.console()
+  }
+  remove_ancestor_fds(res, embeds, progress = progress)
 }
 
-discover_embedded <- function(x, embeds, ...) {
+discover_embedded <- function(x, embeds, progress = FALSE, ...) {
   pres <- to_presence(x)
   res <- lapply(
     setNames(
@@ -156,6 +200,10 @@ discover_embedded <- function(x, embeds, ...) {
       embeds$N
     ),
     \(n) {
+      if (progress) {
+        cat(paste0("\rsearching ", n, "/", length(embeds$N)))
+        flush.console()
+      }
       V <- embeds$V[n, ]
       Vrep <- t(replicate(nrow(x), V))
       used <- apply(is.na(Vrep) | (Vrep == pres), 1, all)
@@ -166,12 +214,20 @@ discover_embedded <- function(x, embeds, ...) {
       discover(sample, ...)
     }
   )
-  remove_ancestor_fds(res, embeds)
+  if (progress) {
+    cat("\n")
+    flush.console()
+  }
+  remove_ancestor_fds(res, embeds, progress = progress)
 }
 
-remove_ancestor_fds <- function(res, embeds) {
+remove_ancestor_fds <- function(res, embeds, progress = FALSE) {
   # remove anything already implied by ancestors
   for (n in seq_along(embeds$N)) {
+    if (progress) {
+      cat(paste0("\rtrimming ", n, "/", length(embeds$N)))
+      flush.console()
+    }
     parents <- parents(embeds, n)
     while (length(parents) > 0) {
       for (p in parents) {
@@ -180,6 +236,10 @@ remove_ancestor_fds <- function(res, embeds) {
       }
       parents <- parents(embeds, parents)
     }
+  }
+  if (progress) {
+    cat("\n")
+    flush.console()
   }
   res
 }
@@ -196,10 +256,14 @@ prekey_schemas <- function(gefds, ...) {
   )
 }
 
-add_partitions <- function(embed_schemas, pfds, embeds) {
+add_partitions <- function(embed_schemas, pfds, embeds, progress = TRUE) {
   full_pfds <- pfds
   # fill with ancestors to ensure correct partition joins
   for (n in seq_along(embeds$N)) {
+    if (progress) {
+      cat(paste0("\rfilling ", n, "/", length(embeds$N)))
+      flush.console()
+    }
     nm <- embeds$N[[n]]
     els <- embeds$V[n, ]
     parents <- parents(embeds, n)
@@ -223,30 +287,69 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
       ))
     }
   }
+  if (progress) {
+    cat("\n")
+    flush.console()
+  }
 
+  if (progress) {
+    cat("embed\n")
+    flush.console()
+  }
   parts <- data.frame(
     embed = rep(names(full_pfds), lengths(full_pfds))
   )
+  if (progress) {
+    cat("key\n")
+    flush.console()
+  }
   parts$key <- unlist(lapply(full_pfds, detset), recursive = FALSE)
+  if (progress) {
+    cat("dep\n")
+    flush.console()
+  }
   parts$dep <- Reduce(c, lapply(full_pfds, dependant), init = character())
-  parts$children <- Map(
-    \(x, dep) with(embeds, {
-      names(full_pfds)[
-        E[, "child"][
-          E[, "parent"] == match(x, names(full_pfds)) &
-            vapply(embeds$A, is.element, logical(1), el = dep)
+  if (progress) {
+    cat("children\n")
+    flush.console()
+  }
+  parts$children <- lapply(
+    seq_len(nrow(parts)),
+    \(n) {
+      if (progress) {
+        cat(paste0("\rchild ", n, "/", nrow(parts)))
+        flush.console()
+      }
+      x <- parts$embed[[n]]
+      dep <- parts$dep[[n]]
+      with(embeds, {
+        names(full_pfds)[
+          E[, "child"][
+            E[, "parent"] == match(x, names(full_pfds)) &
+              vapply(embeds$A, is.element, logical(1), el = dep)
+          ]
         ]
-      ]
-    }),
-    parts$embed,
-    parts$dep
+      })
+    }
   )
+  if (progress) {
+    cat("\n")
+    flush.console()
+  }
+  if (progress) {
+    cat("unique parts\n")
+    flush.console()
+  }
   parts <- df_unique(parts[c("embed", "key", "children")])
   stopifnot(all(lengths(parts$children) > 0))
 
   # make new key table if needed, create new partition reference either way
   new_refs <- list()
   for (n in seq_len(nrow(parts))) {
+    if (progress) {
+      cat(paste0("\rcreating partition ", n, "/", nrow(parts)))
+      flush.console()
+    }
     key <- parts[[n, "key"]]
     key_txt <- autodb:::make.gv_names(paste(key, collapse = "_"))
     parent <- parts[n, "embed"]
@@ -319,6 +422,10 @@ add_partitions <- function(embed_schemas, pfds, embeds) {
         )
       )
     }
+  }
+  if (progress) {
+    cat("\n")
+    flush.console()
   }
   if (anyDuplicated(new_refs))
     stop(print(parts), print(new_refs[seq_len(anyDuplicated(new_refs))]))

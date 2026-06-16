@@ -26,7 +26,22 @@ gv_embedding <- function(x, name = NA_character_, ...) {
   paste("digraph {", dotV, dotE, "}", sep = "\n")
 }
 
-prune_embedding <- function(x, rules, ...) {
+prune_embedding <- function(x, rules, progress = FALSE) {
+  if (length(x$N) == 0)
+    return(x)
+
+  # embind converts a pattern back to an E index
+  nonfixed <- which(is.na(x$V[1, ]))
+  embind <- function(x) {
+    y <- x[nonfixed]
+    as.integer(1L + sum((1L*(!y) + 2L*y)*3L^(seq_along(y) - 1L), na.rm = TRUE))
+  }
+  embinds <- apply(x$V, 1, embind)
+  embinds_corr <- embinds == seq_along(x$N)
+  if (!all(embinds_corr)) {
+    stop(print(which(!embinds_corr)), print(x$V[!embinds_corr, ]), print(embinds[!embinds_corr]))
+  }
+
   # convert rule FDs assuming negated presence columns are all placed afterwards
   ao <- attrs_order(rules)
   stopifnot(length(ao) %% 2 == 0)
@@ -66,41 +81,102 @@ prune_embedding <- function(x, rules, ...) {
     do.call(what = rbind) |>
     (`colnames<-`)(true_ao)
 
+  # merge rules with same detset
+  detset_list <- apply(detset_mat, 1, identity, simplify = FALSE)
+  depset_list <- apply(depset_mat, 1, identity, simplify = FALSE)
+  detset_match <- match(detset_list, detset_list)
+  detset_uniq <- unique(detset_match)
+  detset_mat <- detset_mat[detset_uniq, , drop = FALSE]
+  depset_mat <- do.call(
+    rbind,
+    tapply(
+      depset_list,
+      detset_match,
+      \(x) Reduce(\(x, y) ifelse(is.na(x), y, x), x),
+      simplify = FALSE
+    )
+  )
+  if (progress) {
+    cat(paste0(nrow(detset_mat), "/", length(rules), " unique rule detsets", "\n"))
+    flush.console()
+  }
+
   rem <- rep(FALSE, length(x$N))
   attrs <- colnames(x$V)
-  for (n in seq_along(x$N)) {
-    bools <- x$V[n, ]
-    new_bools <- fixed_point(
-      bools,
-      step = function(x) {
-        for (r in seq_along(rules)) {
-          detpres <- detset_mat[r, ]
-          deppres <- depset_mat[r, ]
-          satisfies_det <- all(is.na(detpres) | (!is.na(x) & detpres == x))
-          coheres_with_dep <- all(is.na(deppres) | is.na(x) | deppres == x)
-          if (satisfies_det) {
-            if (!coheres_with_dep) {
-              return(NULL)
-            }
-            x <- ifelse(is.na(deppres), x, deppres)
-          }
-        }
-        x
-      },
-      endif = function(old, current) {
-        is.null(current) || identical(current, old)
+
+  # only apply first matching rule to each embedding that has an effect,
+  # to get a "parent".
+  bool_list <- apply(x$V, 1, identity, simplify = FALSE)
+  # very slow for large number of embeddings
+  bool_match <- vapply(
+    seq_along(x$N),
+    \(n) {
+      if (progress) {
+        cat(paste0("\r", n, "/", length(x$N)))
+        flush.console()
       }
-    )
-    if (is.null(new_bools)) {
+      x <- bool_list[[n]]
+      dep_unsatis <- which(!apply(
+        depset_mat,
+        1,
+        satisfied,
+        by = x
+      ))
+      if (length(dep_unsatis) == 0)
+        return(n)
+      det_satis <- apply(
+        detset_mat[dep_unsatis, , drop = FALSE],
+        1,
+        satisfied,
+        by = x
+      )
+      if (!any(det_satis))
+        return(n)
+      comb <- rbind(
+        x,
+        depset_mat[dep_unsatis[det_satis], , drop = FALSE]
+      )
+      comb <- apply(
+        comb,
+        2,
+        \(x) unique(na.omit(x)),
+        simplify = FALSE
+      )
+      if (any(lengths(comb) == 2))
+        return(NA_integer_)
+      comb <- vapply(
+        comb,
+        \(x) c(x, NA)[[1]],
+        logical(1)
+      )
+      embind(comb)
+    },
+    integer(1)
+  )
+  # can then follow parents to find root as replacement,
+  # to avoid repeated re-executing of the rules
+  bool_match <- fixed_point(bool_match, \(x) bool_match[x], identical)
+  for (n in seq_along(x$N)) {
+    if (progress) {
+      cat(paste0("\r", n, "/", length(x$N)))
+      flush.console()
+    }
+    bools <- bool_list[[n]]
+    bm <- bool_match[[n]]
+    new_bools <- bool_list[[bm]]
+    if (is.na(bm)) {
       rem[[n]] <- TRUE
       next
     }
-    if (!identical(new_bools, bools)) {
-      replacement <- which(apply(x$V, 1, identical, new_bools))
-      stopifnot(length(replacement) == 1)
+    if (bm != n) {
+      replacement <- bm
       rem[[n]] <- TRUE
       x$E[x$E == n] <- replacement
     }
+  }
+  if (progress) {
+    cat("\n")
+    flush.console()
   }
   keep <- which(!rem)
   x$E[] <- match(x$E, keep)
@@ -128,6 +204,10 @@ prune_embedding <- function(x, rules, ...) {
   x$V <- x$V[keep, , drop = FALSE]
   x$N <- x$N[keep]
   x
+}
+
+satisfied <- function(x, by) {
+  all(is.na(x) | (!is.na(by) & x == by))
 }
 
 fixed_point <- function(init, step, endif) {

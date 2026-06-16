@@ -125,6 +125,15 @@ list(
         character(),
         character()
       ),
+      exclude_class = list(
+        character(),
+        character(),
+        character(),
+        character(),
+        character(),
+        character(),
+        character()
+      ),
       nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7", "ex8")
     ),
     names = "nm",
@@ -166,8 +175,16 @@ list(
       fds_from_rules(presence_rules, names(presence))
     ),
     tar_target(
+      count_presence_rule_fds,
+      length(presence_rule_fds)
+    ),
+    tar_target(
       minimal_presence_rule_fds,
-      minimise_rulefds(presence_rule_fds)
+      minimise_rulefds(presence_rule_fds, progress = TRUE)
+    ),
+    tar_target(
+      count_minimal_presence_rule_fds,
+      length(minimal_presence_rule_fds)
     ),
     tar_target(
       all_embeddings,
@@ -179,7 +196,7 @@ list(
     ),
     tar_target(
       searched_embeddings,
-      prune_embedding(all_embeddings, minimal_presence_rule_fds)
+      prune_embedding(all_embeddings, minimal_presence_rule_fds, progress = TRUE)
     ),
     tar_target(
       dot_searched_embeddings,
@@ -187,11 +204,17 @@ list(
     ),
     tar_target(
       presence_fds,
-      discover_presence(short, searched_embeddings)
+      discover_presence(short, searched_embeddings, progress = TRUE)
     ),
     tar_target(
       gefds,
-      discover_embedded(short, searched_embeddings, exclude = exclude)
+      discover_embedded(
+        short,
+        searched_embeddings,
+        progress = TRUE,
+        exclude = exclude,
+        exclude_class = exclude_class
+      )
     ),
 
     # schema generation
@@ -202,7 +225,7 @@ list(
     ),
     tar_target(
       nullfree_schema,
-      add_partitions(prekey_schema, presence_fds, searched_embeddings) |>
+      add_partitions(prekey_schema, presence_fds, searched_embeddings, progress = TRUE) |>
         collapse_schemas()
     ),
     tar_target(
