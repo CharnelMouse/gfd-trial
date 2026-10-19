@@ -504,6 +504,22 @@ Let's start talking about properties/invariants we expect a null-free schema to 
 - If we join the (rejoined?) schema of a root (ultimate parent / distributed key) with those of its descendants, we losslessly recover all of the original tuples.
   - The mention of a distributed key brings up something important: in addition to the usual operation of joining two relations/embeddings together, we also need an operation of joining together all the relations that belong to a given distributed key. We also need some sort of operation that handles joins over foreign distributed keys: either we join to the whole distributed key by re-joining its relations first, or we join to one of the relations within that distributed key to make a partial join.
 
+## Gas example
+
+As another example, this is a mockup data of gas masks I've seen before:
+
+```{r}
+tar_read(data.gas)
+```
+
+Each machine has a type, and some types have subtypes. Finally, if there is no machine, then the gas level must be zero.
+
+```{r, results='asis'}
+read_dot(tar_read(gv_nullfree_db.gas))
+```
+
+This schema clearly leaves a lot to be desired.
+
 ## Real data
 
 Finally, we show results from some more realistic data sets.

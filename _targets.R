@@ -127,9 +127,16 @@ list(
             model %in% c("A330-223", "A319-112") & manufacturer == "AIRBUS INDUSTRIE",
             paste0(model, "I"),
             model
-          ))
+          )),
+        gas = data.frame(
+          session = 1:15,
+          machine = c(1L, 2L, 3L, 4L, 4L, 5L, 5L, 5L, 6L, 7L, 7L, 8L, 8L, NA, NA),
+          type = rep(c(1:4, NA), c(2, 3, 4, 4, 2)),
+          subtype = c(NA, NA, 1L, 1L, 1L, c(1L, 1L, 1L, 2L), NA, NA, NA, NA, NA, NA),
+          level = c(1L, 1L, 3L, 3L, 2:3, 3:4, 3L, 3L, 4L, 0L, 0L, 0L, 0L)
+        )
       ),
-      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
+      shorten = c(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE),
       exclude = list(
         character(),
         character(),
@@ -141,7 +148,8 @@ list(
         character(),
         c("year", "engines", "seats", "speed"),
         character(),
-        c("year", "engines", "seats", "speed")
+        c("year", "engines", "seats", "speed"),
+        character()
       ),
       exclude_class = list(
         character(),
@@ -154,9 +162,10 @@ list(
         character(),
         character(),
         character(),
+        character(),
         character()
       ),
-      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7", "ex8", "planes", "planes_exclude", "planes_fix", "planes_fix_exclude")
+      nm = c("ex2", "ex3", "ex4", "ex5", "ex6", "ex7", "ex8", "planes", "planes_exclude", "planes_fix", "planes_fix_exclude", "gas")
     ),
     names = "nm",
     delimiter = ".",
